@@ -226,7 +226,7 @@ int main(int argc, char *argv[])
           if ( sampleNr==SAVE_ALL || (sampleNr-1)==i ) {
             if (mo3Hdr.samples[i].compression==MO3COMPR_MP3) 
               sprintf(sampleName,"sample%03d.mp3",i+1);
-            if (mo3Hdr.samples[i].compression==MO3COMPR_OGG) 
+            if (mo3Hdr.samples[i].compression==MO3COMPR_OGG || mo3Hdr.samples[i].compression==MO3COMPR_OGGSHARED) 
               sprintf(sampleName,"sample%03d.ogg",i+1);
             if (mo3Hdr.samples[i].compression==MO3COMPR_NONE) 
               sprintf(sampleName,"sample%03d.dat",i+1);
