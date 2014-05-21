@@ -1,0 +1,1539 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  
+  <title>unofficial MO3 format description</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta content="MO3 format;mod format;module mp3;compressed module;file format;mo3 decompression;mo3 decoding" name="KEYWORDS">
+  <meta content="the unofficial MO3 format description, with source code (GPL)" name="DESCRIPTION">
+  <meta content="home page" name="CATEGORY">
+  
+  <style type="text/css">
+.mo3 { color: rgb(255, 102, 0);
+font-weight: normal;
+font-style: normal;
+text-transform: none;
+text-align: left;
+}
+  </style>
+</head>
+
+
+<body>
+
+
+<center>
+<h1>The unofficial MO3 format description
+</h1>
+<h3>open source MO3 decompression and decoding support (but not playback)</h3>
+</center>
+
+<p>
+</p>
+
+
+<hr>News:
+<ul>
+  <li>2014May21 : code and specification pushed to <a href="https://github.com/lclevy/unmo3">Github</a>, to ease third party contributions (Hi Johannes Schultz)
+  <li>2009Jul19 : v2.4 MO3 encoder updates: code updated to v0.6, and specification updated to 0.91. </li>
+  <li>2006feb26 : unmo3 <b>source code</b> v0.5 is released (for technical people only). See section 4. and <a href="README.txt">Readme</a>. </li>
+  <li>2006feb15 : format descriptions updates (infos about IT MIDI macros and instruments enveloppes from Ian Luck) </li>
+  <li>2006feb05 : the unpack algorithms source code (5 functions) is released. The unpack algorithms are explained. </li>
+</ul>
+
+<p>
+</p>
+
+
+<hr>
+<h3>Version 0.92<br>
+May 18th, 2014<br>
+<img src="em.png">
+</h3>
+
+<p>
+</p>
+
+<h2>0. Credits</h2>
+
+<ul>
+  <li>Laurent Laubin for the PEtite decompression </li>
+  <li>Matthew T. Russotto for the unpack compression explanation </li>
+  <li>Ian Luck for answering questions about missing parts of thespec: IT macros, IT instruments structure, modules flags, IT fields of samples, plus some others... </li>
+  <li>Stuart for initial discussion about the unpack compression.
+  </li>
+
+
+</ul>
+
+
+<p>
+</p>
+
+
+<h2>1. Introduction</h2>
+
+
+This description is applicable to mo3 encoder v1.8, v2.1, v2.2 and v2.4.
+<h3>1.1 Overview</h3>
+
+
+The MO3 format means "MOdule with MP3", because the main initial idea
+was to reduce the size of
+a module (in .mod, IT, XM) by compressing the samples using MPEG audio
+layer 3.
+<p>This format has been created by Ian Luck (<a href="http://www.un4seen.com">http://www.un4seen.com/</a>).
+</p>
+
+
+<p>But not only the samples are compressed, but also the music
+data, containing mainly notes, instruments number
+and effects, as well as instruments information. <br>
+
+
+And a lot of effort has been used to reduce the size of this part. Then
+a specific lossless compression is applied on music data.
+</p>
+
+
+<p>The samples can be compressed using OGG, MP3, and 2 kind of
+specific lossless algorithms.
+</p>
+
+
+<p>We can define "compression" a scheme which detects all kind
+repetition in some data, then encodes these repetition in a more
+compact way. This principle is very well applied in MO3 for music data
+encoding.
+</p>
+
+
+<h3>1.2 The music data size reduction</h3>
+
+
+The first idea of the MO3 encoder is to parse the music data and detect
+unused samples, then they are removed from the module.
+<p>When composing a module, musicians often cut and paste the
+content of a channel (later called a "voice") from one pattern
+to another one : for example drums, and bass. So this kind of
+repetition is detected by the encoder : a list of unique voice is
+built, then the patterns are encoded using pointers onto these unique
+voice data. This idea is used in <a href="mtm.txt">mtm</a>
+format.<br>
+
+
+This is very efficient especially for the "empty" voice : for example
+in a module with 4 channels, often only 3 voices are used per pattern.
+So the "empty" voice is repeated a lot of time.
+</p>
+
+
+<p>In a voice, one row can be repeated several times. This is
+true for the empty row. This kind of repetition is detected and
+stored in a compact way.
+</p>
+
+
+<p>The last size optimisation is how the row in a voice data is
+encoded, using a list of type/value items.
+</p>
+
+
+<p></p>
+
+
+<h3>1.3 The sample delta encodings</h3>
+
+
+Digitized audio data are generally signed values stored in 8bits or
+16bits. If directly compressed using general purpose
+lossless compression algorithms, best result are about 10% of
+reduction, which is poor.<br>
+
+Audio data are roughly sinus data (or sums of it), so with few
+repetition.<br>
+
+But the successive values are close to each other, so a good idea is
+first encode them as delta values, (the first being 0 for example)
+before compression. This is done in the 'delta' version of the MO3
+lossless packers, and in XM modules.<br>
+
+But there is more smart as the mathematical slope of audio data is
+often constant : encode the error for the next predicted delta, instead
+of directly
+the delta value. Then the 'prediction' is adjusted with the error : so
+the prediction is converging to the right 'next' delta value.<br>
+
+
+This method is more efficient than simple delta one, especially on 16
+bits data.
+<p></p>
+
+
+<h2>2. The file format</h2>
+
+
+<h3>2.1 Compressed form</h3>
+
+
+0x10 is the notation of an hexadecimal value (16 in decimal)<br>
+short (2 bytes) and long (4 bytes) are stored in file in little endian order (intel x86)
+<p>
+
+<table border="1" cellpadding="2">
+  <tbody>
+    <tr>
+      <td> Address </td>
+      <td> Length </td>
+      <td> Type </td>
+      <td> Description</td>
+    </tr>
+    <tr>
+      <td> 0x0000 </td>
+      <td> 3 </td>
+      <td> char </td>
+      <td> "MO3"</td>
+    </tr>
+    <tr>
+      <td> 0x0003 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> version (0 with mp3 and lossless, 4 with v2.1, 1 with
+ogg) related with sample compression, 4 should means "with no LAME header".<br> 3 means v2.2 and 5 v2.4 </td>
+
+    </tr>
+    <tr>
+      <td> 0x0004 </td>
+      <td> 1 </td>
+      <td> long </td>
+      <td> uncompressed length of header (music data) </td>
+    </tr>
+  </tbody>
+</table>
+Encoder version 2.2 and earlier (version == 0, 1, 3 or 4):
+<table border="1" cellpadding="2">
+  <tbody>
+    <tr>
+      <td> 0x0008 </td>
+      <td> computed </td>
+      <td> byte[] </td>
+      <td> compressed header (see 2.2 and 2.3 section) </td>
+    </tr>
+    <tr>
+      <td> computed </td>
+      <td> computed </td>
+      <td> byte[] </td>
+      <td> samples, compressed or not, using lossless, mp3 or OGG
+      </td>
+    </tr>
+  
+  </tbody>
+</table>
+Encoder version 2.4 (version == 5):
+<table border="1" cellpadding="2">
+  <tbody>
+    <tr>
+      <td> 0x0008 </td>
+      <td> 1 </td>
+      <td> long </td>
+      <td> data offset in compressed data after decompression</td>
+    </tr>  
+    <tr>
+      <td> 0x000c </td>
+      <td> computed </td>
+      <td> byte[] </td>
+      <td> compressed header (see 2.2 and 2.3 section) </td>
+    </tr>
+    <tr>
+      <td> computed </td>
+      <td> computed </td>
+      <td> byte[] </td>
+      <td> samples, compressed or not, using lossless, mp3 or OGG
+      </td>
+    </tr>
+  
+  </tbody>
+</table>
+
+<h3>2.2 The music data decompression algorithm</h3>
+
+
+Here is Matthew explanation:
+<p>"The first byte is always uncompressed. After that, you've got
+two interleaved streams of control bytes and data bytes. The control
+bytes are read by the shift_dl routine. <br>
+
+In the unpack routine, the control bits are read most-significant first. <br>
+
+A zero bit indicates "uncompressed byte". A one bit indicates compressed data. <br>
+
+The next two control bits control which kind of compression <br>
+
+-- if they are '00' it's LZ with the same (relative) pointer as a previous LZ. <br>
+
+The next two bits of the control stream are the length, unless they are both zero. </p>
+
+<p>If they are both zero, the true length minus 2 is encoded in
+the control stream, two bits per bit. <br>
+
+The first bit in each pair is the actual data, the second bit is 0 on
+the last pair.
+</p>
+
+<p>If the first control bits are '11', '10' or '01', then the LZ
+pointer is in the control stream. <br>
+
+The most significant bit of the pointer is a '1', then the next most
+significant bits of the pointer are read from the control stream two
+bits at a time as described above (including the initial 11 or 01 or
+10). Then 3 is subtracted from that value and it is shifted left by 8
+bits, and the 8 least significant bits if the pointer are taken from
+the data stream. The one's-complement of the result is taken. <br>
+
+The length adjustment for -1280 and -32000 is saved and added back in
+later (it's always at least one). Then it goes into the same LZ as
+before, with the next two bits of the control stream being the length
+unless they are both zero, etc.
+</p>
+
+
+<p>Example:
+</p>
+
+
+<p>64 6d 08 69 61
+</p>
+
+<p>64 = 01100100<br>
+0 = next byte is literal 0x6d<br>
+1 = compressed data<br>
+10 = LZ with MSB of pointer zero after subtracting 3<br>
+</p>
+
+<p>08 -- byte from data stream, pointer to -9 bytes back (points to the 'a' in Danny)
+</p>
+
+<p>01 -- from control stream, a length of 1, plus the adjustment 1 from earlier = 2.<br>
+
+0 -- indicates a literal 69<br>
+0 -- indicates a literal 61. "
+</p>
+
+<p></p>
+
+<p>For more details, look in the source code <a href="https://github.com/lclevy/unmo3/blob/master/mo3_unpack.c">here</a>.
+</p>
+
+<p>This algorithm is copyrighted Ian Luck, and is also used in <a href="http://www.un4seen.com/petite/">PEtite</a>.
+</p>
+
+<p></p>
+
+<h3>2.3 The music data, after decompression</h3>
+
+<h4>2.3.1 General data</h4>
+
+<table border="1" cellpadding="2">
+  <tbody>
+    <tr>
+      <td> Address </td>
+      <td> Length </td>
+      <td> Type </td>
+      <td> Description</td>
+    </tr>
+    <tr>
+      <td> 0x0000 </td>
+      <td> variable </td>
+      <td> char[] </td>
+      <td> song name (terminated by 00)</td>
+    </tr>
+    <tr>
+      <td> computed </td>
+      <td> variable </td>
+      <td> char[] </td>
+      <td> message (in IT, terminated by 00) </td>
+    </tr>
+  </tbody>
+</table>
+
+
+<p>
+then, 0x1a6 bytes :
+</p>
+
+<p>
+<table border="1" cellpadding="2">
+  <tbody>
+    <tr>
+      <td> 0x0000 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> number of channel (for example 04 for .mod, 0x20 for .xm) </td>
+    </tr>
+    <tr>
+      <td> 0x0001 </td>
+      <td> 1 </td>
+      <td> short </td>
+      <td> song len (at 0x3b6 in .mod, at 0x40 in .xm) </td>
+    </tr>
+    <tr>
+      <td> 0x0003 </td>
+      <td> 1 </td>
+      <td> short </td>
+      <td> restart position </td>
+    </tr>
+    <tr>
+      <td> 0x0005 </td>
+      <td> 1 </td>
+      <td> short </td>
+      <td> pattern number </td>
+    </tr>
+    <tr>
+      <td> 0x0007 </td>
+      <td> 1 </td>
+      <td> short </td>
+      <td> unique voice number </td>
+    </tr>
+    <tr>
+      <td> 0x0009 </td>
+      <td> 1 </td>
+      <td> short </td>
+      <td> instrument number </td>
+    </tr>
+    <tr>
+      <td> 0x000b </td>
+      <td> 1 </td>
+      <td> short </td>
+      <td> sample number </td>
+    </tr>
+    <tr>
+      <td> 0x000d </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> ticks/row </td>
+    </tr>
+    <tr>
+      <td> 0x000e </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> initial tempo (default = 125) </td>
+    </tr>
+    <tr>
+      <td> 0x000f </td>
+      <td> 1 </td>
+      <td> long </td>
+      <td> flags<br>
+      
+      <pre> if (mo3Hdr-&gt;flags &amp; 0x0100)
+       printf("IT");
+       else if (mo3Hdr-&gt;flags &amp; 0x0002)
+        printf("S3M");
+       else if (mo3Hdr-&gt;flags &amp; 0x0080)
+        printf("MOD");
+       else if (mo3Hdr-&gt;flags &amp; 0x0008)
+        printf("MTM");
+       else
+        printf("XM");
+        </pre>
+bit#0 : 1 means linear frequency table, 0 means Amiga table (cleared in .mod)<br>
+bit#14: (0x00004000) currently used<br>
+bit#17: (0x00020000) always set <br>
+examples: 0x00024001 for .xm, 0x00020088 for .mod
+      </td>
+    </tr>
+    <tr>
+      <td> 0x0013 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> global volume </td>
+    </tr>
+    <tr>
+      <td> 0x0014 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> pan separation </td>
+    </tr>
+    <tr>
+      <td> 0x0015 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> internal volume (could be ignored) </td>
+    </tr>
+    <tr>
+      <td> 0x0016 </td>
+      <td> 64 </td>
+      <td> byte[] </td>
+      <td> default channel volumes (for 64 channels). </td>
+    </tr>
+    <tr>
+      <td> 0x0056 </td>
+      <td> 64 </td>
+      <td> byte[] </td>
+      <td> default channel panning (for 64 channels). </td>
+    </tr>
+    <tr>
+      <td> 0x0096 </td>
+      <td> 16 </td>
+      <td> byte[] </td>
+      <td> IT MIDI macros : SF0-SFF settings (equate to
+"F0F0&lt;value-1&gt;z" in IT) </td>
+    </tr>
+    <tr>
+      <td> 0x00a6 </td>
+      <td> 128*2 </td>
+      <td> byte </td>
+      <td> IT MIDI macros : Z80-ZFF settings (2 bytes each,
+equate to "F0F0&lt;value1&gt;&lt;value2&gt;") </td>
+    </tr>
+ 
+  </tbody>
+</table>
+</p>
+
+
+<p>then :
+</p>
+
+
+<h4>2.3.2 Song and pattern data</h4>
+
+
+<table border="1" cellpadding="2">
+  <tbody>
+    <tr>
+      <td> Address </td>
+      <td> Length </td>
+      <td> Type </td>
+      <td> Description </td>
+    </tr>
+    <tr>
+      <td> 0x0000 </td>
+      <td> songlen </td>
+      <td> byte[] </td>
+      <td> song sequence (pattern #) </td>
+    </tr>
+    <tr>
+      <td> computed </td>
+      <td> nb unique voice </td>
+      <td> short[] </td>
+      <td> voice seq (for each pattern, and each channel, number
+of voice data) : identical voices are detected and factorized at
+compression. </td>
+    </tr>
+    <tr>
+      <td> computed </td>
+      <td> nb pattern </td>
+      <td> short[] </td>
+      <td> pattern length table (size=nb_patt*2) </td>
+    </tr>
+  
+  </tbody>
+</table>
+
+
+<p>
+In .mod each pattern has 64 row, and 4 channels (for protracker). Each
+row is coded using 4 bytes. So a voice takes 4*64 bytes,
+and a pattern 4*64*4 bytes.<br>
+
+
+In MO3, the number of row per pattern is variable (like in XM) and
+stored in 'pattern length table'. To rebuild a pattern you have to use
+the voice seq table. The voice data are stored as described above :
+</p>
+
+
+<p>For each voice data, repeated "nb unique voice" times.
+</p>
+
+
+<p>
+<table border="1" cellpadding="2">
+  <tbody>
+    <tr>
+      <td> 0x0000 </td>
+      <td> 1 </td>
+      <td> long </td>
+      <td> voice data encoded as type/value list<br>
+(one empty voice is encoded "len=7, 10 f0 f0 f0 f0 30 00" or "len=5, 10
+f0 f0 10 00" depending of pattern length by v1.8 and v2.1<br>
+
+with v2.2 encoder, the empty voice is really empty : only the ending 00) </td>
+
+    </tr>
+  
+  </tbody>
+</table>
+
+
+</p>
+
+
+<p>The first byte is coding both the length of the type/value
+list (using the 4 right most bits) and if this row is repeat or not
+(using the 4 left most bits).<br>
+
+
+For example 0x30 means "3 times a empty row", and 0x32 means "this row
+list has 2 type/value, and is repeat 3 times".
+</p>
+
+
+<p>
+<table border="1" cellpadding="2">
+  <tbody>
+    <tr>
+      <td> type value</td>
+      <td> type description</td>
+      <td> value value</td>
+      <td> Description </td>
+    </tr>
+    <tr>
+      <td> 1 </td>
+      <td> note </td>
+      <td> note number</td>
+      <td> 0=C-0, 1=C#0, 2=D-0, 3=D#0, 4=E-0, ..., 0x58=E-6,
+0x59=F-7, 0x5a=F#7, 0x5b=G-7. <br>
+0xff means "note off, ==", 0xfe means "^^" </td>
+    </tr>
+    <tr>
+      <td> 2 </td>
+      <td> instrument </td>
+      <td> intrument number-1</td>
+      <td> the intrument 1 is coded "0". </td>
+    </tr>
+  </tbody>
+</table>
+
+
+</p>
+
+
+<h5>MOD/MTM&nbsp; effects</h5>
+
+
+<table border="1" cellpadding="2">
+  <tbody>
+    <tr>
+      <td> type value</td>
+      <td> type description</td>
+      <td> value value</td>
+      <td> Description </td>
+    </tr>
+    <tr>
+      <td> 3 </td>
+      <td> 0 </td>
+      <td>effect parameter </td>
+      <td>arpeggio </td>
+    </tr>
+    <tr>
+      <td> 4 </td>
+      <td> 1 </td>
+      <td>effect parameter </td>
+      <td>portamento up </td>
+    </tr>
+    <tr>
+      <td> 5 </td>
+      <td> 2 </td>
+      <td>effect parameter </td>
+      <td>portamento down </td>
+    </tr>
+    <tr>
+      <td> 6 </td>
+      <td> 3 </td>
+      <td>effect parameter </td>
+      <td>tone portamento </td>
+    </tr>
+    <tr>
+      <td> 7 </td>
+      <td> 4 </td>
+      <td>effect parameter </td>
+      <td>vibrato </td>
+    </tr>
+    <tr>
+      <td> 8 </td>
+      <td> 5 </td>
+      <td>effect parameter </td>
+      <td>volume slide + tone portamento </td>
+    </tr>
+    <tr>
+      <td> 9 </td>
+      <td> 6 </td>
+      <td>effect parameter </td>
+      <td>volume slide + vibrato </td>
+    </tr>
+    <tr>
+      <td> 0xc </td>
+      <td> 9 </td>
+      <td>effect parameter </td>
+      <td>set offset </td>
+    </tr>
+    <tr>
+      <td> 0xd </td>
+      <td> A </td>
+      <td>effect parameter </td>
+      <td>volume slide </td>
+    </tr>
+    <tr>
+      <td> 0xf </td>
+      <td> C </td>
+      <td>effect parameter </td>
+      <td>set volume </td>
+    </tr>
+    <tr>
+      <td> 0x10 </td>
+      <td> D </td>
+      <td>effect parameter </td>
+      <td>pattern break </td>
+    </tr>
+    <tr>
+      <td> 0x11 </td>
+      <td> E </td>
+      <td>effect + effect parameter </td>
+      <td>extended effect (E0-&gt;EF) </td>
+    </tr>
+    <tr>
+      <td> 0x12 </td>
+      <td> F </td>
+      <td>effect parameter </td>
+      <td>set speed </td>
+    </tr>
+ 
+  </tbody>
+</table>
+
+
+One good example (almost all effects in a great music) is <a href="http://www.modarchive.com/cgi-bin/download.cgi/D/dannyelf.mod">Danny
+Elfman</a> by <a href="http://www.elmobo.com">Moby</a><br>
+<h5>XM effects</h5>
+
+
+<table border="1" cellpadding="2">
+  <tbody>
+    <tr>
+      <td> type value</td>
+      <td> type description</td>
+      <td> value value</td>
+      <td> Description </td>
+    </tr>
+    <tr>
+      <td> 4 </td>
+      <td> 1 </td>
+      <td>effect parameter </td>
+      <td>portamento up </td>
+    </tr>
+    <tr>
+      <td> 6 </td>
+      <td> 3 </td>
+      <td>effect parameter </td>
+      <td>tone portamento </td>
+    </tr>
+    <tr>
+      <td> 7 </td>
+      <td> 4 </td>
+      <td>effect parameter </td>
+      <td>vibrato </td>
+    </tr>
+    <tr>
+      <td> 0xb </td>
+      <td> p </td>
+      <td>effect parameter </td>
+      <td>set panning. 'p02' is coded '0b 00', 'p62' '0b f0',
+'p10' '0b 20' </td>
+    </tr>
+    <tr>
+      <td> 0xd </td>
+      <td> A </td>
+      <td>effect parameter </td>
+      <td>volume slide </td>
+    </tr>
+    <tr>
+      <td> 0xf </td>
+      <td> v </td>
+      <td>effect parameter </td>
+      <td>set volume </td>
+    </tr>
+    <tr>
+      <td> 0x10 </td>
+      <td> D </td>
+      <td>effect parameter </td>
+      <td>pattern break </td>
+    </tr>
+    <tr>
+      <td> 0x11 </td>
+      <td> E </td>
+      <td>effect parameter </td>
+      <td>pattern delay </td>
+    </tr>
+    <tr>
+      <td> 0x12 </td>
+      <td> F </td>
+      <td>effect parameter </td>
+      <td>set speed </td>
+    </tr>
+    <tr>
+      <td> 0x14 </td>
+      <td> c </td>
+      <td>effect parameter </td>
+      <td>volume slide up. 'c03' is coded "14 30" </td>
+    </tr>
+    <tr>
+      <td> 0x15 </td>
+      <td> b </td>
+      <td>effect parameter </td>
+      <td>fine volume down </td>
+    </tr>
+    <tr>
+      <td> 0x16 </td>
+      <td> G </td>
+      <td>effect parameter </td>
+      <td>set global volume </td>
+    </tr>
+  
+  </tbody>
+</table>
+
+
+
+<h5>IT effects</h5>
+
+
+<table border="1" cellpadding="2">
+  <tbody>
+    <tr>
+      <td> type value</td>
+      <td> type description</td>
+      <td> value value</td>
+      <td> Description </td>
+    </tr>
+    <tr>
+      <td> 6 </td>
+      <td> G </td>
+      <td>effect parameter </td>
+      <td>tone portamento </td>
+    </tr>
+    <tr>
+      <td> 7 </td>
+      <td> H </td>
+      <td>effect parameter </td>
+      <td>vibrato </td>
+    </tr>
+    <tr>
+      <td> 0xb </td>
+      <td> X </td>
+      <td>effect parameter </td>
+      <td>set panning </td>
+    </tr>
+    <tr>
+      <td> 0xf </td>
+      <td> v </td>
+      <td>effect parameter </td>
+      <td>set volume </td>
+    </tr>
+    <tr>
+      <td> 0x22 </td>
+      <td> D </td>
+      <td>effect parameter </td>
+      <td>volume slide </td>
+    </tr>
+    <tr>
+      <td> 0x22 </td>
+      <td> K </td>
+      <td>effect parameter </td>
+      <td>volume slide + vibrato </td>
+    </tr>
+    <tr>
+      <td> 0x28 </td>
+      <td> M </td>
+      <td> effect parameter </td>
+      <td>set channel volume </td>
+    </tr>
+    <tr>
+      <td> 0x30 </td>
+      <td> a </td>
+      <td>effect parameter </td>
+      <td>fine volume up </td>
+    </tr>
+    <tr>
+      <td> 0x30 </td>
+      <td> b </td>
+      <td>8 + effect parameter </td>
+      <td>fine volume down </td>
+    </tr>
+    <tr>
+      <td> 0x30 </td>
+      <td> d </td>
+      <td>(effect parameter)&lt;&lt;4 + 0xf </td>
+      <td>volume slide down. 'd01' is '0x30 0x1f' </td>
+    </tr>
+  
+  </tbody>
+</table>
+
+
+<h5>S3M effects</h5>
+
+
+<table border="1" cellpadding="2">
+  <tbody>
+    <tr>
+      <td> type value</td>
+      <td> type description</td>
+      <td> value value</td>
+      <td> Description </td>
+    </tr>
+    <tr>
+      <td> 6 </td>
+      <td> G </td>
+      <td>effect parameter </td>
+      <td>tone portamento </td>
+    </tr>
+    <tr>
+      <td> 7 </td>
+      <td> H </td>
+      <td>effect parameter </td>
+      <td>vibrato </td>
+    </tr>
+    <tr>
+      <td> 7 and 0x22 </td>
+      <td> K </td>
+      <td>effect parameter </td>
+      <td>vibrato + volume slide (K 01 is coded "07 00 22 01") </td>
+    </tr>
+    <tr>
+      <td> 0xa </td>
+      <td> R </td>
+      <td>effect parameter </td>
+      <td>tremolo </td>
+    </tr>
+    <tr>
+      <td> 0xc </td>
+      <td> O </td>
+      <td>effect parameter </td>
+      <td>set offset </td>
+    </tr>
+    <tr>
+      <td> 0xf </td>
+      <td> v </td>
+      <td>effect parameter </td>
+      <td>set volume </td>
+    </tr>
+    <tr>
+      <td> 0x10 </td>
+      <td> C </td>
+      <td>effect parameter </td>
+      <td>pattern break </td>
+    </tr>
+    <tr>
+      <td> 0x12 </td>
+      <td> T </td>
+      <td>effect parameter </td>
+      <td>set tempo </td>
+    </tr>
+    <tr>
+      <td> 0x16 </td>
+      <td> V </td>
+      <td>effect parameter </td>
+      <td>set global volume </td>
+    </tr>
+    <tr>
+      <td> 0x21 </td>
+      <td> A </td>
+      <td>effect parameter </td>
+      <td>set speed </td>
+    </tr>
+    <tr>
+      <td> 0x22 </td>
+      <td> D </td>
+      <td>effect parameter </td>
+      <td>volume slide </td>
+    </tr>
+    <tr>
+      <td> 0x23 </td>
+      <td> E </td>
+      <td>effect parameter </td>
+      <td>portamento down </td>
+    </tr>
+    <tr>
+      <td> 0x26 </td>
+      <td> Q </td>
+      <td>effect parameter </td>
+      <td>retrigger note </td>
+    </tr>
+    <tr>
+      <td> 0x2b </td>
+      <td> S </td>
+      <td>effect parameter </td>
+      <td>set high offset </td>
+    </tr>
+  
+  </tbody>
+</table>
+<br>
+Example (in hexa): 13 01 38 02 0d 0f 20<br>
+<p>
+13 : 1 row of 3 type/value<br>
+01 38 : note is G#5<br>
+02 0d : instrument is 14<br>
+0f 20 : effect : C20
+</p>
+
+<p>Data for one voice is terminated with 00</p>
+
+<h4>2.3.3 Instruments data</h4>
+
+
+Instrument data takes 0x33a bytes, after the instrument name (0
+terminated)
+<p>
+<table border="1" cellpadding="2">
+  <tbody>
+    <tr>
+      <td> Address </td>
+      <td> Length </td>
+      <td> Type </td>
+      <td> Description </td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td> ? </td>
+      <td> char[] </td>
+      <td> instrument name (0 terminated) </td>
+    </tr>
+    <tr>
+      <td> 0x0000 </td>
+      <td>1 </td>
+      <td> long </td>
+      <td>flags :&nbsp;1 = play on MIDI, 2 = mute. These are
+hardly ever used </td>
+    </tr>
+    <tr>
+      <td> 0x0004 </td>
+      <td> 10*12*4 </td>
+      <td> byte </td>
+      <td> sample map : 10 octaves * 12 notes * 4 bytes (1 byte,
+1 byte, 1 short = sample number) </td>
+    </tr>
+    <tr>
+      <td> 0x01e4 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> volume enveloppe : flags </td>
+    </tr>
+    <tr>
+      <td> 0x01e5 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> volume enveloppe : number of node points </td>
+    </tr>
+    <tr>
+      <td> 0x01e6 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> volume enveloppe : loop beginning </td>
+    </tr>
+    <tr>
+      <td> 0x01e7 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> volume enveloppe : loop end </td>
+    </tr>
+    <tr>
+      <td> 0x01e8 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> volume enveloppe : sustain loop beginning </td>
+    </tr>
+    <tr>
+      <td> 0x01e9 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> volume enveloppe : sustain loop end </td>
+    </tr>
+    <tr>
+      <td> 0x01ea </td>
+      <td> 25*2 </td>
+      <td> short </td>
+      <td> volume enveloppe, 25 nodes : position (short), value
+0-&gt;64 (short) </td>
+    </tr>
+    <tr>
+      <td> 0x024e </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> panning enveloppe : flags </td>
+    </tr>
+    <tr>
+      <td> 0x024f </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> panning enveloppe : number of node points </td>
+    </tr>
+    <tr>
+      <td> 0x0250 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> panning enveloppe : loop beginning </td>
+    </tr>
+    <tr>
+      <td> 0x0251 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> panning enveloppe : loop end </td>
+    </tr>
+    <tr>
+      <td> 0x0252 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> panning enveloppe : sustain loop beginning </td>
+    </tr>
+    <tr>
+      <td> 0x0253 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> panning enveloppe : sustain loop end </td>
+    </tr>
+    <tr>
+      <td> 0x0254 </td>
+      <td> 25*2 </td>
+      <td> short </td>
+      <td> panning enveloppe, 25 nodes : position (short), value
++32/-32(short) </td>
+    </tr>
+    <tr>
+      <td> 0x02b8 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> pitch enveloppe : flags </td>
+    </tr>
+    <tr>
+      <td> 0x02b9 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> pitch enveloppe : number of node points </td>
+    </tr>
+    <tr>
+      <td> 0x02ba </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> pitch enveloppe : loop beginning </td>
+    </tr>
+    <tr>
+      <td> 0x02bb </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> pitch enveloppe : loop end </td>
+    </tr>
+    <tr>
+      <td> 0x02bc </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> pitch enveloppe : sustain loop beginning </td>
+    </tr>
+    <tr>
+      <td> 0x02bd </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> pitch enveloppe : sustain loop end </td>
+    </tr>
+    <tr>
+      <td> 0x02be </td>
+      <td> 25*2 </td>
+      <td> short </td>
+      <td> pitch enveloppe, 25 nodes : position (short), value
++32/-32 (short) </td>
+    </tr>
+    <tr>
+      <td> 0x0322 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> vibrato type (0=sine, 1=Ramp down, 2=square, 3=random)
+      </td>
+    </tr>
+    <tr>
+      <td> 0x0323 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> vibrato sweep </td>
+    </tr>
+    <tr>
+      <td> 0x0324 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> vibrato depth </td>
+    </tr>
+    <tr>
+      <td> 0x0325 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> vibrato rate </td>
+    </tr>
+    <tr>
+      <td> 0x0326 </td>
+      <td> 1 </td>
+      <td> short </td>
+      <td> fade out </td>
+    </tr>
+    <tr>
+      <td> 0x0328 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> midi channel </td>
+    </tr>
+    <tr>
+      <td> 0x0329 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> midi bank </td>
+    </tr>
+    <tr>
+      <td> 0x032a </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> midi patch </td>
+    </tr>
+    <tr>
+      <td> 0x032b </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> midi bend </td>
+    </tr>
+    <tr>
+      <td> 0x032c </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> global volume *2 </td>
+    </tr>
+    <tr>
+      <td> 0x032d </td>
+      <td> 1 </td>
+      <td> short </td>
+      <td> panning </td>
+    </tr>
+    <tr>
+      <td> 0x032f </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> New Note Action [IT] </td>
+    </tr>
+    <tr>
+      <td> 0x0330 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> Pitch Pan Separation [IT] </td>
+    </tr>
+    <tr>
+      <td> 0x0331 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> Pitch Pan Center [IT] </td>
+    </tr>
+    <tr>
+      <td> 0x0332 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> Duplicate Check Type [IT] </td>
+    </tr>
+    <tr>
+      <td> 0x0333 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> Duplicate Check Action [IT] </td>
+    </tr>
+    <tr>
+      <td> 0x0334 </td>
+      <td> 1 </td>
+      <td> short </td>
+      <td> Randon Volume variation (%) [IT] </td>
+    </tr>
+    <tr>
+      <td> 0x0336 </td>
+      <td> 1 </td>
+      <td> short </td>
+      <td> Randon Panning variation [IT] </td>
+    </tr>
+    <tr>
+      <td> 0x0338 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> Initial Filter Cutoff [IT] </td>
+    </tr>
+    <tr>
+      <td> 0x0339 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> Initial Filter Resonance [IT] </td>
+    </tr>
+  
+  </tbody>
+</table>
+
+</p>
+
+<p>The number of sample for given instrument is deducted from the sample map.
+</p>
+
+
+<h4>2.3.4 Samples data</h4>
+
+Samples data takes 0x29 bytes after the sample name, which is 0
+terminated.
+<p>
+<table border="1" cellpadding="2">
+  <tbody>
+    <tr>
+      <td> Address </td>
+      <td> Length </td>
+      <td> Type </td>
+      <td> Description </td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td> ? </td>
+      <td> char[] </td>
+      <td> sample name (0 terminated)<br>
+
+       </td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td> ? </td>
+      <td> char[] </td>
+      <td> sample filename (0 terminated)<br>
+Update: with v2.4 encoder, Johannes Schultz pointed to me "this 0-byte comes from the fact that v2.4 can also store sample filenames right after sample names, so a double-zero simply means that the sample filename is empty. "
+
+       </td>
+    </tr>    <tr>
+      <td> 0x0000 </td>
+      <td> 1 </td>
+      <td> long </td>
+      <td> finetune (0x00 in file = -128, 0x80 = 0, 0x76 = -10, 0x90 = 16) [MOD,MTM, XM]<br>
+or "C4/5 speed" for S3M and IT (with Amiga slides), unless linear bit is also set. </td>
+    </tr>
+    <tr>
+      <td> 0x0004 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> transpose </td>
+    </tr>
+    <tr>
+      <td> 0x0005 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> volume (max 64) </td>
+    </tr>
+    <tr>
+      <td> 0x0006 </td>
+      <td> 1 </td>
+      <td> short </td>
+      <td> panning </td>
+    </tr>
+    <tr>
+      <td> 0x0008 </td>
+      <td> 1 </td>
+      <td> long </td>
+      <td> size (in bytes for 8bits, in short for 16bits).<br>
+if size==0 and end!=0 : means removed sample (not used) </td>
+    </tr>
+    <tr>
+      <td> 0x000c </td>
+      <td> 1 </td>
+      <td> long </td>
+      <td> start </td>
+    </tr>
+    <tr>
+      <td> 0x0010 </td>
+      <td> 1 </td>
+      <td> long </td>
+      <td> end </td>
+    </tr>
+    <tr>
+      <td> 0x0014 </td>
+      <td> 1 </td>
+      <td> short </td>
+      <td> flags<br>
+bit #0 (0x0001): 1=16bits, 0=8bits<br>
+bit #4 (0x0010): 1=loop<br>
+bit #5 (0x0030): 1=bi-loop (both set with bit#4) [IT]<br>
+bit #12 (0x1000): 1=lossy compression (1=mp3 0x1000, together with bit#13 (0x3000) means ogg)<br>
+bit #13 (0x2000) : lossless compression 'delta' (with bit#12 cleared)<br>
+bit #14 (0x4000) : lossless compression 'delta prediction' <br>
+0x0000 means "not compressed" if size!=0<br>
+      </td>
+    </tr>
+    <tr>
+      <td> 0x0016 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> vibrato type (0=sine, 1=ramp down, 2=square, 3=random) [IT] </td>
+
+    </tr>
+    <tr>
+      <td> 0x0017 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> vibrato sweep&nbsp;[IT] </td>
+    </tr>
+    <tr>
+      <td> 0x0018 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> vibrato depth&nbsp;[IT] </td>
+    </tr>
+    <tr>
+      <td> 0x0019 </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> vibrato rate&nbsp;[IT] </td>
+    </tr>
+    <tr>
+      <td> 0x001a </td>
+      <td> 1 </td>
+      <td> byte </td>
+      <td> global volume&nbsp;[IT] </td>
+    </tr>
+    <tr>
+      <td> 0x001b </td>
+      <td> 1 </td>
+      <td> long </td>
+      <td> sustain loop start&nbsp;[IT] </td>
+    </tr>
+    <tr>
+      <td> 0x001f </td>
+      <td> 1 </td>
+      <td> long </td>
+      <td> sustain loop end&nbsp;[IT] </td>
+    </tr>
+    <tr>
+      <td> 0x0023 </td>
+      <td> 1 </td>
+      <td> long </td>
+      <td> compressed size (lossless, mp3 or ogg)&nbsp; </td>
+    </tr>
+    <tr>
+      <td> 0x0027 </td>
+      <td> 1 </td>
+      <td> short </td>
+      <td> encoder delay </td>
+    </tr>
+  
+  </tbody>
+</table>
+
+
+</p>
+
+
+<h3>3. Samples</h3>
+
+
+The samples lossless algorithms are <a href="https://github.com/lclevy/unmo3">here</a>
+(mo3_unpack.c).<br>
+
+
+There is one version for 8 bits sample and another one for 16 bits
+samples.<br>
+
+
+There is 2 kind of algorithm : 1 based on delta encoding (as in <a href="xm.txt">xm</a>), a second one based on delta
+prediction encoding. Then these delta values are stored in a compact
+way.
+<h3>4. Code source</h3>
+
+
+The source code version 0.6 is available <a href="https://github.com/lclevy/unmo3">here</a>.
+Here is an extract of the 'readme' file:
+<p>"The piece of code has been written as a compagnion
+(validation code) of the document "the unofficial MO3 specification".
+</p>
+
+
+<p>It is targeted to developpers or technical people, not for end
+users. It can be used by IT/XM/S3M modules
+specialists (tracker editor developper or modules players) to write a
+MO3 import loader, or more generally to handle MO3 modules in any way.
+</p>
+
+
+<p>The MO3 format has been created by Ian Luck
+(http://www.un4seen.com).
+If you are looking for a good encoder and decoder (but without the
+source code) and a good module player,
+Ian's web site is the right place to go. </p>
+
+
+<p>The features of unmo3 (opensource version) are:
+</p>
+
+
+<ul>
+
+
+  <li> uncompress the MO3 header and samples with lossless
+compressions. </li>
+  <li> able to save to a file uncompressed header and samples </li>
+  <li> able to extract mp3 and ogg compressed samples </li>
+  <li> can display a channel of a given pattern into 2 forms
+    <ul>
+      <li> as encoded inside MO3 file </li>
+      <li> as it usually appears in a tracker editor (for .mod only) </li>
+    </ul>
+  </li>
+
+</ul>
+
+
+"
+<p>You can see output of the 'demo' <a href="demo.txt">here</a>
+and the auto tests <a href="test.txt">here</a>.
+For tests, a second archive '<a href="unmo3_test.zip">unmo3_test.zip</a>'
+is required (has to be uncompressed in the same place as the 'unmo3_src.zip' archive).
+</p>
+The Win32 binary is here <a href="unmo3.exe">unmo3.exe</a>.
+<p>
+
+<h3>5. Other information</h3>
+
+
+unmo3 Win32 executable is compressed with <a href="http://www.un4seen.com/petite/">PEtite</a>, and
+Linux executable with <a href="http://upx.sourceforge.net/">UPX</a>.
+<p>
+Other modules file formats are available here (from <a href="http://www.wotsit.org">Wotsit</a>):
+</p>
+
+
+<ul>
+  <li><a href="mod.txt">mod</a> </li>
+  <li><a href="xm.txt">xm</a> <a href="xm_errata.txt">corrections</a> </li>
+  <li><a href="mtm.txt">mtm</a> <a href="mtm-efx.txt">doc</a> </li>
+  <li><a href="it.txt">it</a> </li>
+  <li><a href="s3m.txt">s3m</a> </li>
+</ul>
+
+
+Previous work on Amiga module compression is available <a href="http://membres.lycos.fr/asle/ampd.html">here</a>
+(Sylvain Chipaux and Gryzor).
+<p>You can find on <a href="http://lclevy.free.fr/exotica">Exotica</a>
+a huge collection of Amiga music formats descriptions.
+</p>
+
+
+<p>State of the art waveform compression is explained here : <a href="http://www.true-audio.com/codec.theory">TTA</a>,
+<a href="http://citeseer.ist.psu.edu/robinson94shorten.html">Shorten</a>,
+<a href="http://www.hpl.hp.com/techreports/1999/HPL-1999-144.pdf%20">AudioPak</a>,
+and <a href="http://flac.sourceforge.net/">FLAC</a>.
+</p>
+
+
+<p>
+<li><a href="http://dumb.sourceforge.net">DUMB</a>
+is a free opensource library to replay XM, IT, MOD and S3M modules.
+<li><a href="http://xmp.sourceforge.net/">XMP</a> is a portable and opensource module player.
+</p>
+
+<p>-end of the document-
+</p>
+
+
+</body>
+</html>
