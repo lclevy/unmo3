@@ -17,6 +17,7 @@ typedef unsigned char *(*samplePackMethod)(unsigned char *, unsigned char *, lon
 #define MO3COMPR_MP3 6
 #define MO3COMPR_OGG 7
 #define MO3COMPR_REMOVED 8
+#define MO3COMPR_OGGSHARED 9
 
 #define MO3RESO_8BITS 1
 #define MO3RESO_16BITS 2
@@ -29,6 +30,7 @@ struct mo3Sample {
   unsigned short flags;
   char compression;
   char reso;
+  unsigned short oggHeaderSource;
 };
 
 struct mo3Data {

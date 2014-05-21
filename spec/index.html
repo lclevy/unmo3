@@ -37,7 +37,7 @@ text-align: left;
   <li>2014May21 : code and specification pushed to <a href="https://github.com/lclevy/unmo3">Github</a>, to ease third party contributions (Hi Johannes Schultz)
   <li>2009Jul19 : v2.4 MO3 encoder updates: code updated to v0.6, and specification updated to 0.91. </li>
   <li>2006feb26 : unmo3 <b>source code</b> v0.5 is released (for technical people only). See section 4. and <a href="README.txt">Readme</a>. </li>
-  <li>2006feb15 : format descriptions updates (infos about IT MIDI macros and instruments enveloppes from Ian Luck) </li>
+  <li>2006feb15 : format descriptions updates (infos about IT MIDI macros and instruments envelopes from Ian Luck) </li>
   <li>2006feb05 : the unpack algorithms source code (5 functions) is released. The unpack algorithms are explained. </li>
 </ul>
 
@@ -229,7 +229,7 @@ Encoder version 2.2 and earlier (version == 0, 1, 3 or 4):
   
   </tbody>
 </table>
-Encoder version 2.4 (version == 5):
+Encoder version 2.4 (version >= 5):
 <table border="1" cellpadding="2">
   <tbody>
     <tr>
@@ -983,7 +983,7 @@ Example (in hexa): 13 01 38 02 0d 0f 20<br>
 <h4>2.3.3 Instruments data</h4>
 
 
-Instrument data takes 0x33a bytes, after the instrument name (0
+Instrument data takes 0x33a bytes, after the instrument name + filename (0
 terminated)
 <p>
 <table border="1" cellpadding="2">
@@ -999,6 +999,12 @@ terminated)
       <td> ? </td>
       <td> char[] </td>
       <td> instrument name (0 terminated) </td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td> ? </td>
+      <td> char[] </td>
+      <td> instrument filename (0 terminated) - Only if version >= 5, otherwise not included </td>
     </tr>
     <tr>
       <td> 0x0000 </td>
@@ -1018,129 +1024,129 @@ hardly ever used </td>
       <td> 0x01e4 </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> volume enveloppe : flags </td>
+      <td> volume envelope : flags </td>
     </tr>
     <tr>
       <td> 0x01e5 </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> volume enveloppe : number of node points </td>
+      <td> volume envelope : number of node points </td>
     </tr>
     <tr>
       <td> 0x01e6 </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> volume enveloppe : loop beginning </td>
+      <td> volume envelope : loop beginning </td>
     </tr>
     <tr>
       <td> 0x01e7 </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> volume enveloppe : loop end </td>
+      <td> volume envelope : loop end </td>
     </tr>
     <tr>
       <td> 0x01e8 </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> volume enveloppe : sustain loop beginning </td>
+      <td> volume envelope : sustain loop beginning </td>
     </tr>
     <tr>
       <td> 0x01e9 </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> volume enveloppe : sustain loop end </td>
+      <td> volume envelope : sustain loop end </td>
     </tr>
     <tr>
       <td> 0x01ea </td>
       <td> 25*2 </td>
       <td> short </td>
-      <td> volume enveloppe, 25 nodes : position (short), value
+      <td> volume envelope, 25 nodes : position (short), value
 0-&gt;64 (short) </td>
     </tr>
     <tr>
       <td> 0x024e </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> panning enveloppe : flags </td>
+      <td> panning envelope : flags </td>
     </tr>
     <tr>
       <td> 0x024f </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> panning enveloppe : number of node points </td>
+      <td> panning envelope : number of node points </td>
     </tr>
     <tr>
       <td> 0x0250 </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> panning enveloppe : loop beginning </td>
+      <td> panning envelope : loop beginning </td>
     </tr>
     <tr>
       <td> 0x0251 </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> panning enveloppe : loop end </td>
+      <td> panning envelope : loop end </td>
     </tr>
     <tr>
       <td> 0x0252 </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> panning enveloppe : sustain loop beginning </td>
+      <td> panning envelope : sustain loop beginning </td>
     </tr>
     <tr>
       <td> 0x0253 </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> panning enveloppe : sustain loop end </td>
+      <td> panning envelope : sustain loop end </td>
     </tr>
     <tr>
       <td> 0x0254 </td>
       <td> 25*2 </td>
       <td> short </td>
-      <td> panning enveloppe, 25 nodes : position (short), value
+      <td> panning envelope, 25 nodes : position (short), value
 +32/-32(short) </td>
     </tr>
     <tr>
       <td> 0x02b8 </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> pitch enveloppe : flags </td>
+      <td> pitch envelope : flags </td>
     </tr>
     <tr>
       <td> 0x02b9 </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> pitch enveloppe : number of node points </td>
+      <td> pitch envelope : number of node points </td>
     </tr>
     <tr>
       <td> 0x02ba </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> pitch enveloppe : loop beginning </td>
+      <td> pitch envelope : loop beginning </td>
     </tr>
     <tr>
       <td> 0x02bb </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> pitch enveloppe : loop end </td>
+      <td> pitch envelope : loop end </td>
     </tr>
     <tr>
       <td> 0x02bc </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> pitch enveloppe : sustain loop beginning </td>
+      <td> pitch envelope : sustain loop beginning </td>
     </tr>
     <tr>
       <td> 0x02bd </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> pitch enveloppe : sustain loop end </td>
+      <td> pitch envelope : sustain loop end </td>
     </tr>
     <tr>
       <td> 0x02be </td>
       <td> 25*2 </td>
       <td> short </td>
-      <td> pitch enveloppe, 25 nodes : position (short), value
+      <td> pitch envelope, 25 nodes : position (short), value
 +32/-32 (short) </td>
     </tr>
     <tr>
@@ -1276,7 +1282,7 @@ hardly ever used </td>
 
 <h4>2.3.4 Samples data</h4>
 
-Samples data takes 0x29 bytes after the sample name, which is 0
+Samples data takes 0x29 bytes after the sample name (0x2B if some flags are set, see below), which is 0
 terminated.
 <p>
 <table border="1" cellpadding="2">
@@ -1299,7 +1305,7 @@ terminated.
       <td> </td>
       <td> ? </td>
       <td> char[] </td>
-      <td> sample filename (0 terminated)<br>
+      <td> sample filename (0 terminated) - Only if version >= 5, otherwise not included <br>
 Update: with v2.4 encoder, Johannes Schultz pointed to me "this 0-byte comes from the fact that v2.4 can also store sample filenames right after sample names, so a double-zero simply means that the sample filename is empty. "
 
        </td>
@@ -1408,13 +1414,19 @@ bit #14 (0x4000) : lossless compression 'delta prediction' <br>
       <td> 0x0023 </td>
       <td> 1 </td>
       <td> long </td>
-      <td> compressed size (lossless, mp3 or ogg)&nbsp; </td>
+      <td> compressed size (lossless, mp3 or ogg) </td>
     </tr>
     <tr>
       <td> 0x0027 </td>
       <td> 1 </td>
       <td> short </td>
       <td> encoder delay </td>
+    </tr>
+    <tr>
+      <td> 0x0029 </td>
+      <td> 1 </td>
+      <td> short </td>
+      <td> Starting from format version 5, ogg-encoded samples can share their headers to reduce size even further. This field is only present if version >= 5 and flag bits 12 and 14 (0x1000 | 0x4000) are set. In this case, the short indicates which sample the ogg header is taken from. </td>
     </tr>
   
   </tbody>
@@ -1448,9 +1460,9 @@ Here is an extract of the 'readme' file:
 </p>
 
 
-<p>It is targeted to developpers or technical people, not for end
+<p>It is targeted towards developers or technical people, not for end
 users. It can be used by IT/XM/S3M modules
-specialists (tracker editor developper or modules players) to write a
+specialists (tracker editor developer or modules players) to write a
 MO3 import loader, or more generally to handle MO3 modules in any way.
 </p>
 
@@ -1483,7 +1495,6 @@ compressions. </li>
 </ul>
 
 
-"
 <p>You can see output of the 'demo' <a href="demo.txt">here</a>
 and the auto tests <a href="test.txt">here</a>.
 For tests, a second archive '<a href="unmo3_test.zip">unmo3_test.zip</a>'

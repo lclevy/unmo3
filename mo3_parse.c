@@ -17,7 +17,7 @@
 char *notes[NB_NOTES]={ "C-", "C#", "D-", "D#", "E-", "F-", "F#", "G-", "G#", "A-", "A#", "B-" };
 
 char *compName[] = { "LosslessDelta8", "LosslessDeltaPred8", "LosslessDelta16","LosslessDeltaPred16",
-  "NotCompressed", "mp3", "ogg", "removed" };
+  "NotCompressed", "mp3", "ogg", "removed", "oggSharedHeader" };
 
 char *typeName[] = { "MOD", "XM", "MTM", "IT", "S3M" };
 
@@ -29,7 +29,6 @@ extern int debug;
 unsigned char * parseSamples(unsigned char *p, int parseLevel, struct mo3Data *mo3Hdr )
 {
   int j, i;
-  int sampleLen = 0x29;
 
   mo3Hdr->samples=(struct mo3Sample*)malloc(mo3Hdr->sampleNb*sizeof(struct mo3Sample));
   if (!mo3Hdr->samples) {
@@ -44,16 +43,16 @@ unsigned char * parseSamples(unsigned char *p, int parseLevel, struct mo3Data *m
 //  printf("offset=0x%x\n", p-src);
     if (parseLevel>1)
       printf(" Sample#%d name = %s\n", i+1, p);
-    while(*p!=0)
-      p++;
+    while(*(p++) != 0);
 
-	if (mo3Hdr->version == 5) 
-      p+=2;
-	else
-      p++;
+	if (mo3Hdr->version>=5) {
+      if (parseLevel>1)
+        printf(" Sample#%d filename = %s\n", i+1, p);
+      while(*(p++) != 0);
+    } 
 
     if (debug>2) {
-      for(j=0; j<sampleLen; j++)
+      for(j=0; j<0x29; j++)
         printf("%02x ", *(p+j));
         putchar('\n');      
     }
@@ -97,7 +96,7 @@ unsigned char * parseSamples(unsigned char *p, int parseLevel, struct mo3Data *m
       }
     } // & 0x2000
     else {
-      if (mo3Hdr->samples[i].flags&0x4000) {
+      if ((mo3Hdr->samples[i].flags&0x5000) == 0x4000) {
         if (mo3Hdr->samples[i].reso == MO3RESO_16BITS) {
           mo3Hdr->samples[i].method = unpackSamp16DeltaPrediction;
           mo3Hdr->samples[i].compression = MO3COMPR_LOSSLESS16DP;
@@ -110,7 +109,7 @@ unsigned char * parseSamples(unsigned char *p, int parseLevel, struct mo3Data *m
       else {
         if (mo3Hdr->samples[i].flags&0x1000) {
           if (mo3Hdr->samples[i].flags&0x2000)
-            mo3Hdr->samples[i].compression = MO3COMPR_OGG;
+            mo3Hdr->samples[i].compression = (mo3Hdr->samples[i].flags&0x4000) ? MO3COMPR_OGGSHARED : MO3COMPR_OGG;
           else
             mo3Hdr->samples[i].compression = MO3COMPR_MP3;
 				} // lossy compression
@@ -125,13 +124,22 @@ unsigned char * parseSamples(unsigned char *p, int parseLevel, struct mo3Data *m
         }
       }
     }
+
+    p+=0x29;
+
+    mo3Hdr->samples[i].oggHeaderSource = i;
+    if ( (mo3Hdr->samples[i].flags&0x5000) == 0x5000 && mo3Hdr->version>=5 ) {
+      // OGG header sharing
+      mo3Hdr->samples[i].oggHeaderSource = iget16(p);
+      p+=2;
+    }
+
     if (parseLevel>2) {
 	    printf("(%s)", compName[mo3Hdr->samples[i].compression-1]);
       if (mo3Hdr->samples[i].method==0)
         printf(" %s",resoName[mo3Hdr->samples[i].reso-1]);
       putchar('\n');
     }
-    p+=sampleLen;
   } // for
 
   return p;
@@ -264,9 +272,14 @@ unsigned char * parseInstr(unsigned char *p, int parseLevel, struct mo3Data *mo3
   for(i=0; i<mo3Hdr->instrNb; i++) {
     if (parseLevel>1)
       printf(" Instr#%d name = %s\n", i+1, p);
-    while(*p!=0)
-      p++;
-    p++;
+    while(*(p++) != 0);
+
+	if (mo3Hdr->version>=5) {
+      if (parseLevel>1)
+        printf(" Instr#%d filename = %s\n", i+1, p);
+      while(*(p++) != 0);
+    } 
+
     if (debug>2) {
       for(j=0; j<4; j++)
         printf("%02x ", *(p+j));
@@ -274,12 +287,12 @@ unsigned char * parseInstr(unsigned char *p, int parseLevel, struct mo3Data *mo3
     }
     if (parseLevel>1) {
       printf("  sample map=\n");
-      printf("  volume enveloppe : nb nodes=%d\n",*(p+4+480+1));
+      printf("  volume envelope : nb nodes=%d\n",*(p+4+480+1));
 /*      for(j=0x24e; j<0x254; j++)
         printf("%02x ", *(p+j));
       putchar('\n');   */   
-      printf("  panning enveloppe: nb nodes=%d\n",*(p+0x24f));
-      printf("  pitch enveloppe  : nb nodes=%d\n",*(p+0x2b9));
+      printf("  panning envelope: nb nodes=%d\n",*(p+0x24f));
+      printf("  pitch envelope  : nb nodes=%d\n",*(p+0x2b9));
     }
     if (debug>2) {
       for(j=0x322; j<0x33a; j++)
