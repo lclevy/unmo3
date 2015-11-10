@@ -213,7 +213,7 @@ Encoder version 2.2 and earlier (version == 0, 1, 3 or 4):
   
   </tbody>
 </table>
-Encoder version 2.4 (version >= 5):
+Encoder version 2.4 (version &ge; 5):
 <table border="1" cellpadding="2">
   <tbody>
     <tr>
@@ -409,6 +409,8 @@ then, 0x1a6 bytes :
 		<li>Bit 2 (0x04): S3M "Fast Volume Slides" (S3M)</li>
 		<li>Bit 3 (0x08): Not an XM file</li>
 		<li>Bit 4 (0x10): S3M "Amiga Limits" (S3M)</li>
+		<li>Bit 5 (0x20): Can be found in some old files, but can be safely ignored (BASS/XMPlay/UNMO3 ignore it too)</li>
+		<li>Bit 6 (0x40): Same as 0x20.</li>
 		<li>Bit 7 (0x80): Is a MOD file</li>
 		<li>Bit 8 (0x100): Is an IT file</li>
 		<li>Bit 9 (0x200): Instrument Mode (IT)</li>
@@ -416,6 +418,7 @@ then, 0x1a6 bytes :
 		<li>Bit 11 (0x800): IT Old Effects (IT) - enabled if bit is <em>not</em> set</li>
 		<li>Bit 16 (0x10000): MPT-compatible playback</li>
 		<li>Bit 17 (0x20000): Always set</li>
+		<li>Bit 19 (0x80000): MOD file uses VBlank timing (Fxx only sets speed, never tempo)</li>
 		<li>Bit 20 (0x100000): Plugin chunk is present (after sample headers)</li>
 		<li>Bit 21 (0x200000): Extended Filter Range (IT, XM)</li> 
       </ul>
@@ -438,19 +441,19 @@ else
       <td> 0x0013 </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> global volume (0...128 in IT, 0...64 in S3M, otherwise ignored)</td>
+      <td> Global Volume (0...128 in IT, 0...64 in S3M, otherwise ignored)</td>
     </tr>
     <tr>
       <td> 0x0014 </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> pan separation (like in IT format - ignored in other formats)</td>
+      <td> Pan Separation (like in IT format - ignored in other formats)</td>
     </tr>
     <tr>
       <td> 0x0015 </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> sample mix volume. To translate into Impulse Tracker's mix volume:
+      <td> Sample mix volume. To translate into Impulse Tracker's mix volume:
       	<pre>
 if (mo3Hdr-&gt;mixvol&lt;0)
     it.mixvol=mo3Hdr-&gt;mixvol+52;
@@ -462,13 +465,13 @@ else
       <td> 0x0016 </td>
       <td> 64 </td>
       <td> byte[] </td>
-      <td> default channel volumes (0...64, for 64 channels). </td>
+      <td> Default channel volumes (0...64, for 64 channels, only IT!). </td>
     </tr>
     <tr>
       <td> 0x0056 </td>
       <td> 64 </td>
       <td> byte[] </td>
-      <td> default channel panning (0...255, 127=surround, for 64 channels). </td>
+      <td> Default channel panning (0...255, 127=surround, for 64 channels. ignore in XM!). </td>
     </tr>
     <tr>
       <td> 0x0096 </td>
@@ -515,17 +518,18 @@ Note: If all MIDI macros are 0, the default macro configuration (SF0 = Set Cutof
     </tr>
     <tr>
       <td> computed </td>
-      <td> nb unique voice </td>
+      <td> nb pattern * nb channel </td>
       <td> short[] </td>
-      <td> voice seq (for each pattern, and each channel, number
-of voice data) : identical voices are detected and factorized at
-compression. </td>
+      <td> for each pattern and each channel, this list contains the number of
+      the unique voice that is being used. identical voices are detected and
+      factorized at compression so that several pattern channels can refer to
+      the same voice. </td>
     </tr>
     <tr>
       <td> computed </td>
       <td> nb pattern </td>
       <td> short[] </td>
-      <td> pattern length table (size=nb_patt*2) </td>
+      <td> pattern length table: number of rows for each pattern </td>
     </tr>
   
   </tbody>
@@ -552,14 +556,26 @@ the voice seq table. The voice data are stored as described above :
 <table border="1" cellpadding="2">
   <tbody>
     <tr>
+      <td> Address </td>
+      <td> Length </td>
+      <td> Type </td>
+      <td> Description </td>
+    </tr>
+    
+    <tr>
       <td> 0x0000 </td>
       <td> 1 </td>
       <td> long </td>
-      <td> voice data encoded as type/value list<br>
-(one empty voice is encoded "len=7, 10 f0 f0 f0 f0 30 00" or "len=5, 10
-f0 f0 10 00" depending of pattern length by v1.8 and v2.1<br>
+      <td> length of this voice in bytes </td>
 
-with v2.2 encoder, the empty voice is really empty : only the ending 00) </td>
+    </tr>
+
+    <tr>
+      <td> 0x0004 </td>
+      <td> length </td>
+      <td> byte[] </td>
+      <td> voice data encoded as type/value list, see below<br>
+    </td>
 
     </tr>
   
@@ -567,10 +583,14 @@ with v2.2 encoder, the empty voice is really empty : only the ending 00) </td>
 </table>
 
 
+<h5> Pattern encoding </h5> 
 
-<p>The first byte is coding both the length of the type/value
-list (using the 4 right most bits) and if this row is repeat or not
-(using the 4 left most bits).</p>
+<p> Pattern data is encoded using control bytes and a type/value list for every
+row. The control byte encodes both the length of the type/value
+list (using the 4 rightmost bits) and if this row is repeated or not
+(using the 4 leftmost bits). Every voice is terminated by a control byte value
+of 0. A decoder should probably not (only) rely on this and also check the
+length field, though. </p>
 
 <p>
 For example 0x30 means "3 times an empty row", and 0x32 means "this row
@@ -581,13 +601,13 @@ list has 2 type/value, and is repeated 3 times".
 <table border="1" cellpadding="2">
   <tbody>
     <tr>
-      <td> type value</td>
+      <td> type (hex) </td>
       <td> type description</td>
-      <td> value value</td>
+      <td> value </td>
       <td> Description </td>
     </tr>
     <tr>
-      <td> 1 </td>
+      <td> 01 </td>
       <td> note </td>
       <td> note number</td>
       <td> 0=C-0, 1=C#0, 2=D-0, 3=D#0, 4=E-0, ..., 0x58=E-6,
@@ -596,7 +616,7 @@ list has 2 type/value, and is repeated 3 times".
 are IT note fade (~~) </td>
     </tr>
     <tr>
-      <td> 2 </td>
+      <td> 02 </td>
       <td> instrument </td>
       <td> intrument number-1</td>
       <td> the intrument 1 is coded "0". </td>
@@ -606,6 +626,9 @@ are IT note fade (~~) </td>
 
 
 <h5>Effects</h5>
+
+<p>Every module effect command has its own "type", and the value byte is the
+command's parameter.</p>
 
 <ul>
 <li><strong>Notation:</strong> Lowercase letters designate volume column
@@ -627,7 +650,7 @@ value and write out the value byte as-is.</li>
 <table border="1" cellpadding="2">
   <tbody>
     <tr>
-      <td> type value (hex)</td>
+      <td> type (hex)</td>
       <td> IT </td>
       <td> S3M </td>
       <td> XM </td>
@@ -761,7 +784,7 @@ value and write out the value byte as-is.</li>
       <td> - </td>
       <td> F </td>
       <td> F </td>
-      <td>Combined Set Speed (xx &lt; 20) / Set Tempo (xx &ge; 20)</td>
+      <td>Combined Set Speed (value &lt; 20) / Set Tempo (value &ge; 20) - if the VBlank flag is set in the header, all values are interpreted as Set Speed.</td>
     </tr>
     <tr>
       <td> 13 </td>
@@ -1001,7 +1024,7 @@ value and write out the value byte as-is.</li>
       <td> - </td>
       <td> - </td>
       <td> - </td>
-      <td>Volume column combined volume slide command (0...9 = fine volume up, 10...19 = fine volume down, 20...29 = volume up, 30...39 = volume down) </td>
+      <td>Volume column combined volume slide command (values 0...9 = fine volume up, 10...19 = fine volume down, 20...29 = volume up, 30...39 = volume down) </td>
     </tr>
     <tr>
       <td> 31 </td>
@@ -1143,8 +1166,8 @@ hardly ever used </td>
       <td> 0x0004 </td>
       <td> 10*12*2 </td>
       <td> short </td>
-      <td> sample map : 10 octaves * 12 notes * 4 bytes (first short = note,
-second short = sample number) </td>
+      <td> sample map : 10 octaves * 12 notes * 4 bytes<br>IT: first short = note [ignore in XM!],
+second short = sample number). In XM, the first 96 values of the sample map are used, the remaining 24 are ignored.</td>
     </tr>
     <tr>
       <td> 0x01e4 </td>
@@ -1324,7 +1347,7 @@ terminated.
       <td> 1 </td>
       <td> long </td>
       <td> Finetune (0x00 in file = -128, 0x80 = 0, 0x76 = -10, 0x90 = 16) [MOD, MTM, XM]<br>
-or "C4/5 speed" (sample rate) for S3M and IT. Sample rate is in Hertz if version &ge; 5, otherwise it can be computed as follows: sampleRate = 15787.0 * pow(2.0, Finetune / 1536.0)</td>
+        or "C4/5 speed" (sample rate) for S3M and IT. Sample rate is in Hertz if version &ge; 5 or linear slides are disabled, otherwise it can be computed as follows: sampleRate = 8363.0 * pow(2.0, (Finetune + 1408) / 1536.0)</td>
     </tr>
     <tr>
       <td> 0x0004 </td>
@@ -1377,7 +1400,7 @@ if size==0 and end!=0 : means removed sample (not used) </td>
           <li>Bit 10 (0x400): Stereo sample</li>
           <li>Bit 12 (0x1000): 1=lossy compression (1=MP3 0x1000, together with bit#13 (0x3000) means OGG, together with bit#13/14 (0x7000) means OGG with shared Vorbis header)</li>
           <li>Bit 13 (0x2000): lossless compression 'delta' (with bit#12 cleared)</li>
-          <li>Bit 14 (0x4000) : lossless compression 'delta prediction'</li>
+          <li>Bit 14 (0x4000): lossless compression 'delta prediction'</li>
         </ul>
         If none of the compression flags (0x1000, 0x2000, 0x4000) are set, the sample is compressed at all, i.e. stored as normal signed integer PCM data.
       </td>
@@ -1393,7 +1416,7 @@ if size==0 and end!=0 : means removed sample (not used) </td>
       <td> 0x0017 </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> Vibrato Sweep[IT] </td>
+      <td> Vibrato Sweep [IT] </td>
     </tr>
     <tr>
       <td> 0x0018 </td>
@@ -1429,13 +1452,14 @@ if size==0 and end!=0 : means removed sample (not used) </td>
       <td> 0x0023 </td>
       <td> 1 </td>
       <td> long </td>
-      <td> Compressed Size (lossless, mp3 or ogg) </td>
+      <td> Compressed Size. If it is negative, this is a copy of a previous sample (-1 is the previous sample, -2 the sample before that, etc.). </td>
     </tr>
     <tr>
       <td> 0x0027 </td>
       <td> 1 </td>
       <td> short </td>
-      <td> Encoder Delay </td>
+      <td> MP3: Encoder Delay in bytes. This also includes the samples cut off by LAME's gapless header!<br>
+           OGG: If shared headers are used, this is the header size.</td>
     </tr>
     <tr>
       <td> 0x0029 </td>
@@ -1474,7 +1498,7 @@ samples.<br>
 There is 2 kind of algorithm : 1 based on delta encoding (as in <a href="xm.txt">xm</a>), a second one based on delta
 prediction encoding. Then these delta values are stored in a compact
 way.
-<h3>4. Code source</h3>
+<h3>4. Source code</h3>
 
 
 The source code version 0.6 is available <a href="https://github.com/lclevy/unmo3">here</a>.
@@ -1560,9 +1584,9 @@ and <a href="http://flac.sourceforge.net/">FLAC</a>.
 
 
 <ul>
-<li><a href="http://dumb.sourceforge.net">DUMB</a>
+<li><a href="https://github.com/kode54/dumb/">DUMB</a>
 is a free opensource library to replay XM, IT, MOD and S3M modules.</li>
-<li><a href="http://xmp.sourceforge.net/">XMP</a> is a portable and opensource module player.</li>
+<li><a href="https://github.com/cmatsuoka/libxmp/">XMP</a> is a portable and opensource module player.</li>
 </ul>
 
 <p>-end of the document-
