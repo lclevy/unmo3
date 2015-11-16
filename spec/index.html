@@ -31,6 +31,7 @@ text-align: left;
 
 <hr>News:
 <ul>
+  <li>2015Nov16 : small clarifications and updates
   <li>2015Nov10 : updated specification by Johannes Schultz
   <li>2014May21 : code and specification pushed to <a href="https://github.com/lclevy/unmo3">Github</a>, to ease third party contributions (Hi Johannes Schultz)
   <li>2009Jul19 : v2.4 MO3 encoder updates: code updated to v0.6, and specification updated to 0.91. </li>
@@ -68,8 +69,7 @@ This description is applicable to mo3 encoder v1.8, v2.1, v2.2 and v2.4.
 
 The MO3 format means "MOdule with MP3", because the main initial idea
 was to reduce the size of
-a module (in .mod, IT, XM) by compressing the samples using MPEG audio
-layer 3.
+a module (in .mod, IT, XM) by compressing the samples using MPEG audio.
 <p>This format has been created by Ian Luck (<a href="http://www.un4seen.com">http://www.un4seen.com/</a>).
 </p>
 
@@ -1346,7 +1346,7 @@ terminated.
       <td> 0x0000 </td>
       <td> 1 </td>
       <td> long </td>
-      <td> Finetune (0x00 in file = -128, 0x80 = 0, 0x76 = -10, 0x90 = 16) [MOD, MTM, XM]<br>
+      <td> Finetune (signed char -128...127 like in XM, but with MOD/XM the "center" value is at 0x80, with MTM it's 0x00. MTM also seems to have the lowest bit of the second byte set for some reason, but it can be ignored.) [MOD, XM, MTM]<br>
         or "C4/5 speed" (sample rate) for S3M and IT. Sample rate is in Hertz if version &ge; 5 or linear slides are disabled, otherwise it can be computed as follows: sampleRate = 8363.0 * pow(2.0, (Finetune + 1408) / 1536.0)</td>
     </tr>
     <tr>
@@ -1398,7 +1398,7 @@ if size==0 and end!=0 : means removed sample (not used) </td>
           <li>Bit 8 (0x100): Sustain loop enabled</li>
           <li>Bit 9 (0x200): Ping-pong sustain loop (set together with 0x100)</li>
           <li>Bit 10 (0x400): Stereo sample</li>
-          <li>Bit 12 (0x1000): 1=lossy compression (1=MP3 0x1000, together with bit#13 (0x3000) means OGG, together with bit#13/14 (0x7000) means OGG with shared Vorbis header)</li>
+          <li>Bit 12 (0x1000): 1=lossy compression (MPEG 1.0 / 2.0 / 2.5, together with bit#13 (0x3000) means OGG, together with bit#13/14 (0x7000) means OGG with shared Vorbis header)</li>
           <li>Bit 13 (0x2000): lossless compression 'delta' (with bit#12 cleared)</li>
           <li>Bit 14 (0x4000): lossless compression 'delta prediction'</li>
         </ul>
@@ -1458,14 +1458,14 @@ if size==0 and end!=0 : means removed sample (not used) </td>
       <td> 0x0027 </td>
       <td> 1 </td>
       <td> short </td>
-      <td> MP3: Encoder Delay in bytes. This also includes the samples cut off by LAME's gapless header!<br>
-           OGG: If shared headers are used, this is the header size.</td>
+      <td> MP3: Encoder Delay in bytes. This also includes the samples cut off by LAME's gapless header! Note that the byte value assumes that the decoded sample has 16-bit quality, i.e. to convert it to samples, divide it by 2 (or 4 for stereo samples).<br>
+           OGG: If shared headers are used, this is the header size (i.e. read as many bytes from the other sample's data and then append the current sample's data).</td>
     </tr>
     <tr>
       <td> 0x0029 </td>
       <td> 1 </td>
       <td> short </td>
-      <td> Starting from format version 5, OGG-encoded samples can share their headers to reduce size even further. This field is only present if version &ge; 5 and flag bits 12 and 14 (0x1000 | 0x4000) are set. In this case, the short indicates which sample the OGG header is taken from. </td>
+      <td> Starting from format version 5, OGG-encoded samples can share their headers to reduce size even further. This field is only present if version &ge; 5 and flag bits 12 and 14 (0x1000 | 0x4000) are set. In this case, the short indicates which sample the OGG header is taken from. This is a signed value, and headers can be taken from both previous and follow-up samples. </td>
     </tr>
   
   </tbody>
@@ -1487,17 +1487,31 @@ and MPTM files (FX00, FX01, ... chunks).
 <h3>3. Samples</h3>
 
 
-The samples lossless algorithms are <a href="https://github.com/lclevy/unmo3">here</a>
-(mo3_unpack.c).<br>
+<p>The samples lossless algorithms are <a href="https://github.com/lclevy/unmo3">here</a>
+(mo3_unpack.c).</p>
 
 
-There is one version for 8 bits sample and another one for 16 bits
-samples.<br>
+<p>There is one version for 8 bits sample and another one for 16 bits
+samples.</p>
 
 
-There is 2 kind of algorithm : 1 based on delta encoding (as in <a href="xm.txt">xm</a>), a second one based on delta
+<p>There is 2 kind of algorithm : 1 based on delta encoding (as in <a href="xm.txt">xm</a>), a second one based on delta
 prediction encoding. Then these delta values are stored in a compact
-way.
+way.</p>
+
+<p>Special care has to be taken of MPEG samples:
+MO3 files created with recent versions of the MO3 encoder will not contain LAME
+headers with gapless information, in this case the sample just needs to be
+decoded and the encoder delay must be removed afterwards.
+However, older MO3 files may contain LAME info frames including gapless
+information.
+In this case you have two options: Either you detect if a LAME info frame is
+present (i.e. parse the first MPEG frame) and don't apply MO3's encoder delay
+information, or you instruct your MPEG decoder to ignore the LAME info frame
+(in case of libmpg123, you can set the MPG123_IGNORE_INFOFRAME flag) and apply
+the encoder delay yourself.</p>
+
+
 <h3>4. Source code</h3>
 
 
