@@ -1,12 +1,13 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
   
   <title>unofficial MO3 format description</title>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta content="MO3 format;mod format;module mp3;compressed module;file format;mo3 decompression;mo3 decoding" name="KEYWORDS">
-  <meta content="the unofficial MO3 format description, with source code (GPL)" name="DESCRIPTION">
-  <meta content="home page" name="CATEGORY">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta content="MO3 format;mod format;module mp3;compressed module;file format;mo3 decompression;mo3 decoding" name="keywords" />
+  <meta content="the unofficial MO3 format description, with source code (GPL)" name="description" />
   
   <style type="text/css">
 .mo3 { color: rgb(255, 102, 0);
@@ -23,39 +24,40 @@ text-align: left;
 
 
 <center>
-<h1>The unofficial MO3 format description
-</h1>
+<h1>The unofficial MO3 format description</h1>
 <h3>open source MO3 decompression and decoding support (but not playback)</h3>
 </center>
 
 
-<hr>News:
+<hr/>News:
 <ul>
-  <li>2015Nov16 : small clarifications and updates
-  <li>2015Nov10 : updated specification by Johannes Schultz
-  <li>2014May21 : code and specification pushed to <a href="https://github.com/lclevy/unmo3">Github</a>, to ease third party contributions (Hi Johannes Schultz)
-  <li>2009Jul19 : v2.4 MO3 encoder updates: code updated to v0.6, and specification updated to 0.91. </li>
-  <li>2006feb26 : unmo3 <b>source code</b> v0.5 is released (for technical people only). See section 4. and <a href="README.txt">Readme</a>. </li>
-  <li>2006feb15 : format descriptions updates (infos about IT MIDI macros and instruments envelopes from Ian Luck) </li>
-  <li>2006feb05 : the unpack algorithms source code (5 functions) is released. The unpack algorithms are explained. </li>
+  <li>2016-01-26 : new v5 misc chunks and commands are now documented. This document is now considered to be complete.</li>
+  <li>2015-11-16 : small clarifications and updates</li>
+  <li>2015-11-10 : updated specification by Johannes Schultz, version 0.93.</li>
+  <li>2014-05-21 : code and specification pushed to <a href="https://github.com/lclevy/unmo3">Github</a>, to ease third party contributions</li>
+  <li>2009-07-19 : v2.4 MO3 encoder updates: code updated to v0.6, and specification updated to 0.91. </li>
+  <li>2006-02-26 : unmo3 <b>source code</b> v0.5 is released (for technical people only). See section 4. and <a href="README.txt">Readme</a>. </li>
+  <li>2006-02-15 : format descriptions updates (infos about IT MIDI macros and instruments envelopes from Ian Luck) </li>
+  <li>2006-02-05 : the unpack algorithms source code (5 functions) is released. The unpack algorithms are explained. </li>
 </ul>
 
 
-<hr>
-<h3>Version 0.93<br>
-November 10th, 2015<br>
-<img src="em.png">
+<hr/>
+<h3>Version 1.00<br/>
+January 26th, 2016<br/>
+<img src="em.png" />
 </h3>
 
 
 <h2>0. Credits</h2>
 
 <ul>
-  <li>Laurent Laubin for the PEtite decompression </li>
-  <li>Matthew T. Russotto for the unpack compression explanation </li>
+  <li>Laurent Clévy is the original author of this document.</li>
+  <li>Laurent Laubin for the PEtite decompression</li>
+  <li>Matthew T. Russotto for the unpack compression explanation</li>
   <li>Ian Luck for answering questions about missing parts of thespec: IT macros, IT instruments structure, modules flags, IT fields of samples, plus some others... </li>
   <li>Stuart for initial discussion about the unpack compression.</li>
-  <li>Johannes Schultz for further information on the format</li>
+  <li>Johannes Schultz for further information on the format (all updates since version 0.93 of this document).</li>
 </ul>
 
 
@@ -67,16 +69,17 @@ This description is applicable to mo3 encoder v1.8, v2.1, v2.2 and v2.4.
 <h3>1.1 Overview</h3>
 
 
-The MO3 format means "MOdule with MP3", because the main initial idea
+<p>The MO3 format means "MOdule with MP3", because the main initial idea
 was to reduce the size of
-a module (in .mod, IT, XM) by compressing the samples using MPEG audio.
-<p>This format has been created by Ian Luck (<a href="http://www.un4seen.com">http://www.un4seen.com/</a>).
+a module (in MOD, XM, MTM, S3M, IT, MPTM format) by compressing the samples
+using MPEG audio.
+This format has been created by Ian Luck (<a href="http://www.un4seen.com/">http://www.un4seen.com/</a>).
 </p>
 
 
 <p>But not only the samples are compressed, but also the music
 data, containing mainly notes, instruments number
-and effects, as well as instruments information. <br>
+and effects, as well as instruments information. <br/>
 
 
 And a lot of effort has been used to reduce the size of this part. Then
@@ -84,7 +87,7 @@ a specific lossless compression is applied on music data.
 </p>
 
 
-<p>The samples can be compressed using OGG, MP3, and 2 kind of
+<p>The samples can be compressed using Ogg, MP3, and 2 kind of
 specific lossless algorithms.
 </p>
 
@@ -94,6 +97,10 @@ repetition in some data, then encodes these repetition in a more
 compact way. This principle is very well applied in MO3 for music data
 encoding.
 </p>
+
+
+<p>Note: MPTM files are technically extended IT files, so unless noted otherwise,
+all IT-specific documentation below applies to MPTM files as well.</p>
 
 
 <h3>1.2 The music data size reduction</h3>
@@ -107,7 +114,7 @@ to another one : for example drums, and bass. So this kind of
 repetition is detected by the encoder : a list of unique voice is
 built, then the patterns are encoded using pointers onto these unique
 voice data. This idea is used in <a href="mtm.txt">mtm</a>
-format.<br>
+format.<br/>
 
 
 This is very efficient especially for the "empty" voice : for example
@@ -134,21 +141,21 @@ encoded, using a list of type/value items.
 Digitized audio data are generally signed values stored in 8bits or
 16bits. If directly compressed using general purpose
 lossless compression algorithms, best result are about 10% of
-reduction, which is poor.<br>
+reduction, which is poor.<br/>
 
 Audio samples are very random signals, so with few
-repetitions.<br>
+repetitions.<br/>
 
 But the successive values are close to each other, so a good idea is
 first encode them as delta values, (the first being 0 for example)
 before compression. This is done in the 'delta' version of the MO3
-lossless packers, and in XM modules.<br>
+lossless packers, and in XM modules.<br/>
 
 But there is more smart as the mathematical slope of audio data is
 often constant : encode the error for the next predicted delta, instead
 of directly
 the delta value. Then the 'prediction' is adjusted with the error : so
-the prediction is converging to the right 'next' delta value.<br>
+the prediction is converging to the right 'next' delta value.<br/>
 
 
 This method is more efficient than simple delta one, especially on 16
@@ -161,7 +168,7 @@ bits data.
 <h3>2.1 Compressed form</h3>
 
 
-0x10 is the notation of an hexadecimal value (16 in decimal)<br>
+0x10 is the notation of an hexadecimal value (16 in decimal)<br/>
 short (2 bytes) and long (4 bytes) are stored in file in little endian order (intel x86)
 
 <table border="1" cellpadding="2">
@@ -182,8 +189,8 @@ short (2 bytes) and long (4 bytes) are stored in file in little endian order (in
       <td> 0x0003 </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> version (0 with mp3 and lossless, 4 with v2.1, 1 with
-ogg) related with sample compression, 4 should means "with no LAME header".<br> 3 means v2.2 and 5 v2.4 </td>
+      <td> version (0 with MP3 and lossless, 4 with v2.1, 1 with
+ogg) related with sample compression, 4 should means "with no LAME header".<br/> 3 means v2.2 and 5 v2.4 </td>
 
     </tr>
     <tr>
@@ -194,20 +201,20 @@ ogg) related with sample compression, 4 should means "with no LAME header".<br> 
     </tr>
   </tbody>
 </table>
-Encoder version 2.2 and earlier (version == 0, 1, 3 or 4):
+Encoder version 2.2 and earlier (version == 0 ... 4):
 <table border="1" cellpadding="2">
   <tbody>
     <tr>
       <td> 0x0008 </td>
       <td> computed </td>
       <td> byte[] </td>
-      <td> compressed music data (see section 2.2 - 2.4) </td>
+      <td> compressed music data (see section 2.2 - 2.5) </td>
     </tr>
     <tr>
       <td> computed </td>
       <td> computed </td>
       <td> byte[] </td>
-      <td> samples, compressed or not, using lossless, mp3 or OGG
+      <td> samples, compressed or not, using lossless, MP3 or Ogg
       </td>
     </tr>
   
@@ -226,13 +233,13 @@ Encoder version 2.4 (version &ge; 5):
       <td> 0x000c </td>
       <td> computed </td>
       <td> byte[] </td>
-      <td> compressed music data (see section 2.2 - 2.4) </td>
+      <td> compressed music data (see section 2.2 - 2.5) </td>
     </tr>
     <tr>
       <td> computed </td>
       <td> computed </td>
       <td> byte[] </td>
-      <td> samples, compressed or not, using lossless, mp3 or OGG
+      <td> samples, compressed or not, using lossless, MP3 or Ogg
       </td>
     </tr>
   
@@ -242,37 +249,37 @@ Encoder version 2.4 (version &ge; 5):
 <h3>2.2 The music data decompression algorithm</h3>
 
 
-Here is Matthew explanation:
+Here is Matthew's explanation:
 <p>"The first byte is always uncompressed. After that, you've got
 two interleaved streams of control bytes and data bytes. The control
-bytes are read by the shift_dl routine. <br>
+bytes are read by the shift_dl routine. <br/>
 
-In the unpack routine, the control bits are read most-significant first. <br>
+In the unpack routine, the control bits are read most-significant first. <br/>
 
-A zero bit indicates "uncompressed byte". A one bit indicates compressed data. <br>
+A zero bit indicates "uncompressed byte". A one bit indicates compressed data. <br/>
 
-The next two control bits control which kind of compression <br>
+The next two control bits control which kind of compression <br/>
 
--- if they are '00' it's LZ with the same (relative) pointer as a previous LZ. <br>
+-- if they are '00' it's LZ with the same (relative) pointer as a previous LZ. <br/>
 
 The next two bits of the control stream are the length, unless they are both zero. </p>
 
 <p>If they are both zero, the true length minus 2 is encoded in
-the control stream, two bits per bit. <br>
+the control stream, two bits per bit. <br/>
 
 The first bit in each pair is the actual data, the second bit is 0 on
 the last pair.
 </p>
 
 <p>If the first control bits are '11', '10' or '01', then the LZ
-pointer is in the control stream. <br>
+pointer is in the control stream. <br/>
 
 The most significant bit of the pointer is a '1', then the next most
 significant bits of the pointer are read from the control stream two
 bits at a time as described above (including the initial 11 or 01 or
 10). Then 3 is subtracted from that value and it is shifted left by 8
 bits, and the 8 least significant bits if the pointer are taken from
-the data stream. The one's-complement of the result is taken. <br>
+the data stream. The one's-complement of the result is taken. <br/>
 
 The length adjustment for -1280 and -32000 is saved and added back in
 later (it's always at least one). Then it goes into the same LZ as
@@ -288,18 +295,18 @@ unless they are both zero, etc.
 <p>64 6d 08 69 61
 </p>
 
-<p>64 = 01100100<br>
-0 = next byte is literal 0x6d<br>
-1 = compressed data<br>
-10 = LZ with MSB of pointer zero after subtracting 3<br>
+<p>64 = 01100100<br/>
+0 = next byte is literal 0x6d<br/>
+1 = compressed data<br/>
+10 = LZ with MSB of pointer zero after subtracting 3<br/>
 </p>
 
 <p>08 -- byte from data stream, pointer to -9 bytes back (points to the 'a' in Danny)
 </p>
 
-<p>01 -- from control stream, a length of 1, plus the adjustment 1 from earlier = 2.<br>
+<p>01 -- from control stream, a length of 1, plus the adjustment 1 from earlier = 2.<br/>
 
-0 -- indicates a literal 69<br>
+0 -- indicates a literal 69<br/>
 0 -- indicates a literal 61. "
 </p>
 
@@ -401,7 +408,7 @@ then, 0x1a6 bytes :
       <td> 0x000f </td>
       <td> 1 </td>
       <td> long </td>
-      <td> flags<br>
+      <td> flags<br/>
       
       <ul>
         <li>Bit 0 (0x01): Linear frequency slides (IT, XM)</li>
@@ -412,11 +419,11 @@ then, 0x1a6 bytes :
 		<li>Bit 5 (0x20): Can be found in some old files, but can be safely ignored (BASS/XMPlay/UNMO3 ignore it too)</li>
 		<li>Bit 6 (0x40): Same as 0x20.</li>
 		<li>Bit 7 (0x80): Is a MOD file</li>
-		<li>Bit 8 (0x100): Is an IT file</li>
+		<li>Bit 8 (0x100): Is an IT or MPTM file</li>
 		<li>Bit 9 (0x200): Instrument Mode (IT)</li>
 		<li>Bit 10 (0x400): IT Compatible Gxx (IT) - enabled if bit is <em>not</em> set</li>
 		<li>Bit 11 (0x800): IT Old Effects (IT) - enabled if bit is <em>not</em> set</li>
-		<li>Bit 16 (0x10000): MPT-compatible playback</li>
+		<li>Bit 16 (0x10000): MPT-compatible playback (for BASS/XMPlay)</li>
 		<li>Bit 17 (0x20000): Always set</li>
 		<li>Bit 19 (0x80000): MOD file uses VBlank timing (Fxx only sets speed, never tempo)</li>
 		<li>Bit 20 (0x100000): Plugin chunk is present (after sample headers)</li>
@@ -426,7 +433,7 @@ then, 0x1a6 bytes :
       Bit 3 is set for all types except XM. MTM only has this type flag set, so the practical order for format checking is:
       <pre>
 if (mo3Hdr-&gt;flags &amp; 0x0100)
-    printf("IT");
+    printf("IT/MPTM");
 else if (mo3Hdr-&gt;flags &amp; 0x0002)
     printf("S3M");
 else if (mo3Hdr-&gt;flags &amp; 0x0080)
@@ -465,13 +472,13 @@ else
       <td> 0x0016 </td>
       <td> 64 </td>
       <td> byte[] </td>
-      <td> Default channel volumes (0...64, for 64 channels, only IT!). </td>
+      <td> Default channel volumes (0...64, for 64 channels, only IT/MPTM!). </td>
     </tr>
     <tr>
       <td> 0x0056 </td>
       <td> 64 </td>
       <td> byte[] </td>
-      <td> Default channel panning (0...255, 127=surround, for 64 channels. ignore in XM!). </td>
+      <td> Default channel panning (0...255, 127=surround, for 64 channels. Ignore in XM!). </td>
     </tr>
     <tr>
       <td> 0x0096 </td>
@@ -537,14 +544,8 @@ Note: If all MIDI macros are 0, the default macro configuration (SF0 = Set Cutof
 
 
 <p>
-In .mod each pattern has 64 row, and 4 channels (for ProTracker). Each
-row is coded using 4 bytes. So a voice takes 4*64 bytes,
-and a pattern 4*64*4 bytes.<br>
-</p>
-
-<p>
-In MO3, the number of rows per pattern is variable (like in XM) and
-stored in 'pattern length table'. To rebuild a pattern you have to use
+In MO3, the number of rows per pattern is variable (like in IT/XM) and
+stored in the 'pattern length table'. To rebuild a pattern you have to use
 the voice seq table. The voice data are stored as described above :
 </p>
 
@@ -574,7 +575,7 @@ the voice seq table. The voice data are stored as described above :
       <td> 0x0004 </td>
       <td> length </td>
       <td> byte[] </td>
-      <td> voice data encoded as type/value list, see below<br>
+      <td> voice data encoded as type/value list, see below<br/>
     </td>
 
     </tr>
@@ -611,15 +612,15 @@ list has 2 type/value, and is repeated 3 times".
       <td> note </td>
       <td> note number</td>
       <td> 0=C-0, 1=C#0, 2=D-0, 3=D#0, 4=E-0, ..., 0x58=E-6,
-0x59=F-7, 0x5a=F#7, 0x5b=G-7. <br>
+0x59=F-7, 0x5a=F#7, 0x5b=G-7. <br/>
 0xff means note off (==), 0xfe means note cut (^^), any other values above 120
 are IT note fade (~~) </td>
     </tr>
     <tr>
       <td> 02 </td>
       <td> instrument </td>
-      <td> intrument number-1</td>
-      <td> the intrument 1 is coded "0". </td>
+      <td> instrument number-1</td>
+      <td> the instrument 1 is coded "0". </td>
     </tr>
   </tbody>
 </table>
@@ -632,7 +633,7 @@ command's parameter.</p>
 
 <ul>
 <li><strong>Notation:</strong> Lowercase letters designate volume column
-effects, uppercase letters go into the effect column.</br>
+effects, uppercase letters go into the effect column.<br/>
 Effect notation is presented as in OpenMPT, so they may differ from e.g. how
 they are displayed in FT2.</li>
 <li><strong>Playback:</strong> Note that some commands appear multiple times in the table, presumably
@@ -1042,20 +1043,60 @@ value and write out the value byte as-is.</li>
       <td> - </td>
       <td>Volume column portamento up</td>
     </tr>
- 
+    <tr>
+      <td> 33 </td>
+      <td> - </td>
+      <td> - </td>
+      <td> W </td>
+      <td> - </td>
+      <td>Unused XM command "W", which can be used for syncing purposes.</td>
+    </tr>
+    <tr>
+      <td> 34 </td>
+      <td> * </td>
+      <td> - </td>
+      <td> - </td>
+      <td> - </td>
+      <td>Contains the original value of any unrecognized / non-standard IT volume column command. For example, OpenMPT's MPTM-exclusive volume column command oxx (Sample cue) is stored using this way (values 223...232 = o00 - o09).</td>
+    </tr>
+    <tr>
+      <td> 35 </td>
+      <td> # </td>
+      <td> - </td>
+      <td> # </td>
+      <td> - </td>
+      <td>OpenMPT's "Parameter Extension" command.</td>
+    </tr>
+    <tr>
+      <td> 36 </td>
+      <td> \ </td>
+      <td> - </td>
+      <td> \ </td>
+      <td> - </td>
+      <td>OpenMPT's "Smooth MIDI Macro" command. Similar to Zxx, but interpolates between the old and new Zxx / \xx parameter.</td>
+    </tr>
+    <tr>
+      <td> 37 </td>
+      <td> : </td>
+      <td> - </td>
+      <td> - </td>
+      <td> - </td>
+      <td>OpenMPT's "Delay Cut" (:xy). This command only exists in the MPTM format. It delays the note next to it for x ticks and then cuts it at x+y ticks.</td>
+    </tr>
+    
   </tbody>
 </table>
 
 
 One good example for MOD (almost all effects in a great music) is <a href="http://modarchive.org/module.php?36042">Danny
-Elfmania</a> by <a href="http://www.elmobo.com">Moby</a><br>
+Elfmania</a> by <a href="http://www.elmobo.com">Moby</a><br/>
 
-<br>
-Example (in hexa): 13 01 38 02 0d 0f 20<br>
+<br/>
+Example (in hexa): 13 01 38 02 0d 0f 20<br/>
 <p>
-13 : 1 row of 3 type/value<br>
-01 38 : note is G#5<br>
-02 0d : instrument is 14<br>
+13 : 1 row of 3 type/value<br/>
+01 38 : note is G#5<br/>
+02 0d : instrument is 14<br/>
 0f 20 : effect : C20
 </p>
 
@@ -1133,7 +1174,7 @@ Every instrument contains three envelopes, which follow this structure:
 </table>
 
 
-
+<p>Instrument structure:</p>
 
 <table border="1" cellpadding="2">
   <tbody>
@@ -1145,13 +1186,13 @@ Every instrument contains three envelopes, which follow this structure:
     </tr>
     <tr>
       <td> </td>
-      <td> ? </td>
+      <td> variable </td>
       <td> char[] </td>
       <td> instrument name (0 terminated) </td>
     </tr>
     <tr>
       <td> </td>
-      <td> ? </td>
+      <td> variable </td>
       <td> char[] </td>
       <td> instrument filename (0 terminated) - Only if version &ge; 5, otherwise not included </td>
     </tr>
@@ -1166,7 +1207,7 @@ hardly ever used </td>
       <td> 0x0004 </td>
       <td> 10*12*2 </td>
       <td> short </td>
-      <td> sample map : 10 octaves * 12 notes * 4 bytes<br>IT: first short = note [ignore in XM!],
+      <td> sample map : 10 octaves * 12 notes * 4 bytes<br/>IT: first short = note [ignore in XM!],
 second short = sample number). In XM, the first 96 values of the sample map are used, the remaining 24 are ignored.</td>
     </tr>
     <tr>
@@ -1216,7 +1257,7 @@ second short = sample number). In XM, the first 96 values of the sample map are 
       <td> 0x0326 </td>
       <td> 1 </td>
       <td> short </td>
-      <td> Fade Out </td>
+      <td> Fade Out (in XM precision, so divide by 32 for IT)</td>
     </tr>
     <tr>
       <td> 0x0328 </td>
@@ -1330,15 +1371,15 @@ terminated.
     </tr>
     <tr>
       <td> </td>
-      <td> ? </td>
+      <td> variable </td>
       <td> char[] </td>
-      <td> Sample Name (0 terminated)<br>
+      <td> Sample Name (0 terminated)<br/>
 
        </td>
     </tr>
     <tr>
       <td> </td>
-      <td> ? </td>
+      <td> variable </td>
       <td> char[] </td>
       <td> Sample Filename (0 terminated) - Only if version &ge; 5, otherwise not included 
     </tr>
@@ -1346,7 +1387,7 @@ terminated.
       <td> 0x0000 </td>
       <td> 1 </td>
       <td> long </td>
-      <td> Finetune (signed char -128...127 like in XM, but with MOD/XM the "center" value is at 0x80, with MTM it's 0x00. MTM also seems to have the lowest bit of the second byte set for some reason, but it can be ignored.) [MOD, XM, MTM]<br>
+      <td> Finetune (signed char -128...127 like in XM, but with MOD/XM the "center" value is at 0x80, with MTM it's 0x00. MTM also seems to have the lowest bit of the second byte set for some reason, but it can be ignored.) [MOD, XM, MTM]<br/>
         or "C4/5 speed" (sample rate) for S3M and IT. Sample rate is in Hertz if version &ge; 5 or linear slides are disabled, otherwise it can be computed as follows: sampleRate = 8363.0 * pow(2.0, (Finetune + 1408) / 1536.0)</td>
     </tr>
     <tr>
@@ -1371,7 +1412,7 @@ terminated.
       <td> 0x0008 </td>
       <td> 1 </td>
       <td> long </td>
-      <td> Sample length in sampling points<br>
+      <td> Sample length in sampling points<br/>
 if size==0 and end!=0 : means removed sample (not used) </td>
     </tr>
     <tr>
@@ -1390,7 +1431,7 @@ if size==0 and end!=0 : means removed sample (not used) </td>
       <td> 0x0014 </td>
       <td> 1 </td>
       <td> short </td>
-      <td> Flags<br>
+      <td> Flags<br/>
         <ul>
           <li>Bit 0 (0x01): 16-bit sample (8-bit otherwise)</li>
           <li>Bit 4 (0x10): Sample loop enabled</li>
@@ -1398,11 +1439,11 @@ if size==0 and end!=0 : means removed sample (not used) </td>
           <li>Bit 8 (0x100): Sustain loop enabled</li>
           <li>Bit 9 (0x200): Ping-pong sustain loop (set together with 0x100)</li>
           <li>Bit 10 (0x400): Stereo sample</li>
-          <li>Bit 12 (0x1000): 1=lossy compression (MPEG 1.0 / 2.0 / 2.5, together with bit#13 (0x3000) means OGG, together with bit#13/14 (0x7000) means OGG with shared Vorbis header)</li>
+          <li>Bit 12 (0x1000): 1=lossy compression (MPEG 1.0 / 2.0 / 2.5, together with bit#13 (0x3000) means Ogg, together with bit#13/14 (0x7000) means Ogg with shared Vorbis header)</li>
           <li>Bit 13 (0x2000): lossless compression 'delta' (with bit#12 cleared)</li>
           <li>Bit 14 (0x4000): lossless compression 'delta prediction'</li>
         </ul>
-        If none of the compression flags (0x1000, 0x2000, 0x4000) are set, the sample is compressed at all, i.e. stored as normal signed integer PCM data.
+        If none of the compression flags (0x1000, 0x2000, 0x4000) are set, the sample is not compressed at all, i.e. stored as normal signed integer PCM data.
       </td>
     </tr>
     <tr>
@@ -1434,13 +1475,13 @@ if size==0 and end!=0 : means removed sample (not used) </td>
       <td> 0x001a </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> Global Volume[IT] </td>
+      <td> Global Volume [IT] </td>
     </tr>
     <tr>
       <td> 0x001b </td>
       <td> 1 </td>
       <td> long </td>
-      <td> Sustain Loop Start[IT] </td>
+      <td> Sustain Loop Start [IT] </td>
     </tr>
     <tr>
       <td> 0x001f </td>
@@ -1458,14 +1499,14 @@ if size==0 and end!=0 : means removed sample (not used) </td>
       <td> 0x0027 </td>
       <td> 1 </td>
       <td> short </td>
-      <td> MP3: Encoder Delay in bytes. This also includes the samples cut off by LAME's gapless header! Note that the byte value assumes that the decoded sample has 16-bit quality, i.e. to convert it to samples, divide it by 2 (or 4 for stereo samples).<br>
-           OGG: If shared headers are used, this is the header size (i.e. read as many bytes from the other sample's data and then append the current sample's data).</td>
+      <td> MP3: Encoder Delay in bytes. This also includes the samples cut off by LAME's gapless header! Note that the byte value assumes that the decoded sample has 16-bit quality, i.e. to convert it to samples, divide it by 2 (or 4 for stereo samples). See section 3.1 for practical hints on LAME headers.<br/>
+           Ogg: If shared headers are used, this is the header size (i.e. read as many bytes from the other sample's data and then append the current sample's data).</td>
     </tr>
     <tr>
       <td> 0x0029 </td>
       <td> 1 </td>
       <td> short </td>
-      <td> Starting from format version 5, OGG-encoded samples can share their headers to reduce size even further. This field is only present if version &ge; 5 and flag bits 12 and 14 (0x1000 | 0x4000) are set. In this case, the short indicates which sample the OGG header is taken from. This is a signed value, and headers can be taken from both previous and follow-up samples. </td>
+      <td> Starting from format version 5, Ogg-encoded samples can share their headers to reduce size even further. This field is only present if version &ge; 5 and flag bits 12 and 14 (0x1000 | 0x4000) are set. In this case, the short indicates which sample the Ogg header is taken from. This is a signed value, and headers can be taken from both previous and follow-up samples. </td>
     </tr>
   
   </tbody>
@@ -1474,30 +1515,111 @@ if size==0 and end!=0 : means removed sample (not used) </td>
 
 <h3>2.4 Plugins</h3>
 
-If the plugin flag is set in the header, plugin data follows:
+<p>If the plugin flag is set in the header, plugin data follows:</p>
 
-The first byte determines if plugin to channel mappings follow. If the byte is
+<p>The first byte determines if plugin to channel mappings follow. If the byte is
 1, read a long for every channel. If it is 0, no plugin is assinged to this
 channel, if it is 1, the first plugin is assigned, etc.
-Afterwards the plugin data follows.
-A byte indicates for which plugin it is (0 = done, 1 = first plugin, etc.)
+Afterwards the plugin data follows.</p>
+<p>A byte indicates for which plugin it is (0 = none, 1 = first plugin, etc.)
+and a long determines the data size.
 This data follows the OpenMPT plugin information as it can be found in IT, XM
-and MPTM files (FX00, FX01, ... chunks).
+and MPTM files (<a href="https://wiki.openmpt.org/Development:_OpenMPT_Format_Extensions#FX00.2C_..._FX99.2C_F100.2C_..._F255">FX00, FX01, ... chunks</a>).</p>
 
-<h3>3. Samples</h3>
+<h3>2.5 Misc chunks</h3>
+
+<p>After the plugin data (or after the sample headers if the plugin flag is not
+set), some miscellaneous chunks may be found in format version 5 upwards.
+Support for these chunks was added in MO3 2.4.1, released in January 2016.</p>
+
+<p>The chunk layout is as follows:</p>
+
+<table border="1" cellpadding="2">
+  <tbody>
+    <tr>
+      <td> Address </td>
+      <td> Length </td>
+      <td> Type </td>
+      <td> Description </td>
+    </tr>
+    <tr>
+      <td> 0 </td>
+      <td> 4 </td>
+      <td> char[4] </td>
+      <td> Chunk ID </td>
+    </tr>
+    <tr>
+      <td> 4 </td>
+      <td> 4 </td>
+      <td> long </td>
+      <td> Chunk size </td>
+    </tr>
+    <tr>
+      <td> 8 </td>
+      <td> computed </td>
+      <td> byte[] </td>
+      <td> Chunk content (size specified by previous field) </td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The following chunk IDs are currently used:</p>
+
+<ul>
+<li> <code>VERS</code>: Original version information from the source file, which
+     can be helpful when figuring out how to play a file (i.e. emulate quirks of
+     the tracker that was used to create the original file).
+     For XM files, it contains the tracker identification string (only if it was
+     not "FastTracker v2.00"), for MTM files the version byte from the header,
+     and for S3M / IT files the original Cwt/v (and Cmwt in case of IT) header
+     values.<br/>
+     This is the only reliable way to distinguish between IT and MPTM files:
+     If 0x0889 &lt; Cwt/v &lt;= 0x8FF, the original file was an MPTM file rather
+     than an IT file.</li> 
+
+<li> <code>MIDI</code>: Full MIDI macro configuration (same chunk
+     layout as in IT), in case it cannot be expressed completely through MO3's
+     condensed version in the header above.</li> 
+
+<li> <code>OMPT</code>: All of OpenMPT's MPTM/IT/XM extensions.<br/>
+     This chunk may contain the following data in the given order:
+     <ul>
+     <li> <code>PNAM</code>: Pattern names. Followed by a long indicating the
+          length of the following pattern name data. Names are stored with a
+          fixed width of 32 characters (each name itself may be null-terminated
+          if it is shorter than 32 characters). This implies that there are
+          (length / 32) pattern names in the chunk.</li>
+     <li> <code>CNAM</code>: Channel names. Works exactly like pattern names,
+          with the difference that channel names are only 20 characters long.</li>
+     <li> <code>XTPM</code>: <a href="https://wiki.openmpt.org/Development:_OpenMPT_Format_Extensions#OpenMPT_Instrument_Extensions">
+          OpenMPT Instrument Extensions</a>. Same format as in OpenMPT-made files.
+     <li> <code>STPM</code>: <a href="https://wiki.openmpt.org/Development:_OpenMPT_Format_Extensions#OpenMPT_Song_Extensions">
+          OpenMPT Song Extensions</a>. Same format as in OpenMPT-made files.
+     <li> <code>STPM</code>: <a href="https://wiki.openmpt.org/Development:_OpenMPT_Format_Extensions#OpenMPT_Song_Extensions">
+          OpenMPT Song Extensions</a>. Same format as in OpenMPT-made files.
+     <li> <code>228</code>: OpenMPT MPTM extensions. Same format as in
+          OpenMPT-made files. These only follow if the original file was an MPTM
+          file.
+     </ul>
+</li> 
+</ul>
+
+
+<h2>3. Samples</h2>
 
 
 <p>The samples lossless algorithms are <a href="https://github.com/lclevy/unmo3">here</a>
 (mo3_unpack.c).</p>
 
 
-<p>There is one version for 8 bits sample and another one for 16 bits
-samples.</p>
+<p>There is one version for 8 bit samples and another one for 16 bit samples.</p>
 
 
-<p>There is 2 kind of algorithm : 1 based on delta encoding (as in <a href="xm.txt">xm</a>), a second one based on delta
-prediction encoding. Then these delta values are stored in a compact
-way.</p>
+<p>There are two lossless algorithms: One based on delta encoding
+(as in <a href="xm.txt">xm</a>), a second one based on delta prediction
+encoding. Then these delta values are stored in a compact way.</p>
+
+<h3>3.1 Practical hints</h3>
 
 <p>Special care has to be taken of MPEG samples:
 MO3 files created with recent versions of the MO3 encoder will not contain LAME
@@ -1505,14 +1627,35 @@ headers with gapless information, in this case the sample just needs to be
 decoded and the encoder delay must be removed afterwards.
 However, older MO3 files may contain LAME info frames including gapless
 information.
-In this case you have two options: Either you detect if a LAME info frame is
-present (i.e. parse the first MPEG frame) and don't apply MO3's encoder delay
-information, or you instruct your MPEG decoder to ignore the LAME info frame
-(in case of libmpg123, you can set the MPG123_IGNORE_INFOFRAME flag) and apply
-the encoder delay yourself.</p>
+In this case you have three options:
+</p>
+<ul>
+<li>Detect if a LAME info frame is present (i.e. parse the first MPEG frame) and
+compute the frame's length in samples
+(<a href="https://source.openmpt.org/browse/openmpt/trunk/OpenMPT/soundlib/MPEGFrame.cpp">example code</a>).
+Subtract the length from the encoder delay and do not feed this frame into the
+MPEG decoder. This is the most stable solution, as it is independent of the MPEG
+decoder's capabilities, so it can be used with Windows' ACM or Media Foundation
+codecs.</li>
+<li>Detect if a LAME info frame is present (i.e. parse the first MPEG frame) and
+let the decoder handle the LAME header (don't apply MO3's encoder delay
+information at all).</li>
+<li>Instruct your MPEG decoder to ignore the LAME info frame (in case of
+libmpg123, you can set the MPG123_IGNORE_INFOFRAME flag in recent versions) and
+apply the encoder delay yourself.</li>
+</ul>
+
+<p>Depending on the Ogg decoder, special care has to be taken of Ogg samples with
+shared headers: Every Ogg stream has a unique ID, and this ID has to be
+identical for all packets of the stream. Some decoders like
+<a href="https://github.com/nothings/stb/blob/master/stb_vorbis.c">stb_vorbis</a>
+do not care at all about this, so you can just stitch to together the Ogg stream
+from the shared samples. libvorbis, on the other hand, requires the shared
+header to be modified so that it uses the same unique ID as the rest of the
+sample stream.
 
 
-<h3>4. Source code</h3>
+<h2>4. Source code</h2>
 
 
 The source code version 0.6 is available <a href="https://github.com/lclevy/unmo3">here</a>.
@@ -1530,7 +1673,7 @@ MO3 import loader, or more generally to handle MO3 modules in any way.
 
 
 <p>The MO3 format has been created by Ian Luck
-(http://www.un4seen.com).
+(<a href="http://www.un4seen.com/">http://www.un4seen.com/</a>).
 If you are looking for a good encoder and decoder (but without the
 source code) and a good module player,
 Ian's web site is the right place to go. </p>
@@ -1567,7 +1710,7 @@ The Win32 binary is here <a href="unmo3.exe">unmo3.exe</a>.
 <h3>5. Other information</h3>
 
 
-unmo3 Win32 executable is compressed with <a href="http://www.un4seen.com/petite/">PEtite</a>, and
+The unmo3 Win32 executable is compressed with <a href="http://www.un4seen.com/petite/">PEtite</a>, and the
 Linux executable with <a href="http://upx.sourceforge.net/">UPX</a>.
 <p>
 Other modules file formats are available here (from <a href="http://www.wotsit.org">Wotsit</a>):
@@ -1583,9 +1726,9 @@ Other modules file formats are available here (from <a href="http://www.wotsit.o
 </ul>
 
 
-Previous work on Amiga module compression is available <a href="http://membres.lycos.fr/asle/ampd.html">here</a>
-(Sylvain Chipaux and Gryzor).
-<p>You can find on <a href="http://lclevy.free.fr/exotica">Exotica</a>
+<p>Previous work on Amiga module compression is available <a href="http://membres.lycos.fr/asle/ampd.html">here</a>
+(Sylvain Chipaux and Gryzor).<br/>
+You can find on <a href="http://lclevy.free.fr/exotica">Exotica</a>
 a huge collection of Amiga music formats descriptions.
 </p>
 
@@ -1598,9 +1741,13 @@ and <a href="http://flac.sourceforge.net/">FLAC</a>.
 
 
 <ul>
+<li><a href="https://lib.openmpt.org/">libopenmpt</a> can play a wide range of
+  module formats. It is the first module library with native decoding of MO3,
+  which was made possible by this document.</li>
 <li><a href="https://github.com/kode54/dumb/">DUMB</a>
-is a free opensource library to replay XM, IT, MOD and S3M modules.</li>
-<li><a href="https://github.com/cmatsuoka/libxmp/">XMP</a> is a portable and opensource module player.</li>
+  is a free opensource library to replay XM, IT, MOD, S3M and other modules.</li>
+<li><a href="https://github.com/cmatsuoka/libxmp/">XMP</a> is a portable and
+  open-source module player.</li>
 </ul>
 
 <p>-end of the document-
