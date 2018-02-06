@@ -4,13 +4,14 @@ unmo3 (opensource) v0.6
 19 Jul 2009
 
 
-Copyright Laurent Clévy (lclevy@free.fr)
+Copyright Laurent Clevy (lclevy@free.fr)
 This code is under GPLv2 license. 
 
 ------------------------------------------
 
 * changelog
-
+- 10nov2015: now part of OpenMPT project
+  . see https://source.openmpt.org/svn/openmpt/trunk/OpenMPT/soundlib/Load_mo3.cpp
 - 19jul2009, code source updated to v0.6 for MO3 v2.4 encoder
   . version = 5. Also able to handle version = 3 (encoder 2.2)
   . compressed header at offset 12 instead of 8
