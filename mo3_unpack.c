@@ -82,7 +82,7 @@ unsigned char * unpack(unsigned char *src, unsigned char *dst, long size)
       size--;
     }
     else { // a 1 ctrl bit means compressed bytes are following
-      ebp = 0; // lenth adjustement
+      ebp = 0; // length adjustment
       DECODE_CTRL_BITS; // read length, anf if strLen>3 (coded using more than 1 bits pair) also part of the offset value
       strLen -=3;
       if ((long)(strLen)<0) { // means LZ ptr with same previous relative LZ ptr (saved one)
@@ -110,10 +110,10 @@ unsigned char * unpack(unsigned char *src, unsigned char *dst, long size)
         DECODE_CTRL_BITS; // decode length : 1 is the most significant bit,
         strLen+=2;  // then first bit of each bits pairs (noted n1), until n0.
       }
-      strLen = strLen + ebp; // length adjustement
-      if (size>=strLen) {
+      strLen = strLen + ebp; // length adjustment
+      if (size>=strLen && strLen > 0) {
         string = dst + strOffset; // pointer to previous string
-        if(string < initDst || string >= dst)
+        if(strOffset >= 0 || (ptrdiff_t)(dst - initDst) + strOffset < 0)
           break;
         size-=strLen;
         for(; strLen>0; strLen--)
