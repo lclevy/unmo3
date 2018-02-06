@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
 
   ptr = unpack(mo3+headerOffset, uncomp_header, uncomp_size);
   if (debug)
-    printf("Offset in compressed data after decompression = 0x%x (%d)\n",ptr-(mo3+headerOffset), ptr-(mo3+headerOffset));
+    printf("Offset in compressed data after decompression = 0x%lx (%ld)\n",ptr-(mo3+headerOffset), ptr-(mo3+headerOffset));
 
 //  getMp3Length(ptr);
 
@@ -208,14 +208,14 @@ int main(int argc, char *argv[])
           sample1 = 0;
 
         if (debug>1)
-          printf("sample#%03d is at offset 0x%x in compressed data\n", i+1, ptr-(mo3+8));         
+          printf("sample#%03d is at offset 0x%lx in compressed data\n", i+1, ptr-(mo3+8));         
 
         if (mo3Hdr.samples[i].method!=0) {
           ptr = mo3Hdr.samples[i].method(ptr, sample1, mo3Hdr.samples[i].len);
           if ( sampleNr==SAVE_ALL || (sampleNr-1)==i ) {
             sprintf(sampleName,"sample%03d.dat",i+1);
             saveFile(sampleName, sample1, mo3Hdr.samples[i].len);
-            printf("saving %s (offset 0x%x, length %ld/%ld bytes, compression %s, resolution %s)...\n",  
+            printf("saving %s (offset 0x%lx, length %ld/%ld bytes, compression %s, resolution %s)...\n",  
 						  sampleName, ptr-(mo3+8), mo3Hdr.samples[i].len, 
 							mo3Hdr.samples[i].lenComp, compName[mo3Hdr.samples[i].compression-1], 
 							resoName[mo3Hdr.samples[i].reso-1]);
@@ -231,7 +231,7 @@ int main(int argc, char *argv[])
             if (mo3Hdr.samples[i].compression==MO3COMPR_NONE) 
               sprintf(sampleName,"sample%03d.dat",i+1);
             saveFile(sampleName, ptr, mo3Hdr.samples[i].lenComp);
-            printf("saving %s (offset 0x%x, length %ld/%ld bytes, compression %s, resolution %s)...\n",  
+            printf("saving %s (offset 0x%lx, length %ld/%ld bytes, compression %s, resolution %s)...\n",  
 						  sampleName, ptr-(mo3+8), mo3Hdr.samples[i].len, 
 							mo3Hdr.samples[i].lenComp, compName[mo3Hdr.samples[i].compression-1], 
 							resoName[mo3Hdr.samples[i].reso-1]);
