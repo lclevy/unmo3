@@ -73,7 +73,7 @@ This description is applicable to mo3 encoder v1.8, v2.1, v2.2 and v2.4.
 was to reduce the size of
 a module (in MOD, XM, MTM, S3M, IT, MPTM format) by compressing the samples
 using MPEG audio.
-This format has been created by Ian Luck (<a href="http://www.un4seen.com/">http://www.un4seen.com/</a>).
+This format has been created by Ian Luck (<a href="https://www.un4seen.com/">https://www.un4seen.com/</a>).
 </p>
 
 
@@ -313,7 +313,7 @@ unless they are both zero, etc.
 <p>For more details, look in the source code <a href="https://github.com/lclevy/unmo3/blob/master/mo3_unpack.c">here</a>.
 </p>
 
-<p>This algorithm is copyrighted Ian Luck, and is also used in <a href="http://www.un4seen.com/petite/">PEtite</a>.
+<p>This algorithm is copyrighted Ian Luck, and is also used in <a href="https://www.un4seen.com/petite/">PEtite</a>.
 </p>
 
 <h3>2.3 The music data, after decompression</h3>
@@ -1088,7 +1088,7 @@ value and write out the value byte as-is.</li>
 </table>
 
 
-One good example for MOD (almost all effects in a great music) is <a href="http://modarchive.org/module.php?36042">Danny
+One good example for MOD (almost all effects in a great music) is <a href="https://modarchive.org/module.php?36042">Danny
 Elfmania</a> by <a href="http://www.elmobo.com">Moby</a><br/>
 
 <br/>
@@ -1574,7 +1574,7 @@ Support for these chunks was added in MO3 2.4.1, released in January 2016.</p>
      and for S3M / IT files the original Cwt/v (and Cmwt in case of IT) header
      values.<br/>
      This is the only reliable way to distinguish between IT and MPTM files:
-     If 0x0889 &lt; Cwt/v &lt;= 0x8FF, the original file was an MPTM file rather
+     If 0x0889 &le; Cwt/v &le; 0x8FF, the original file was an MPTM file rather
      than an IT file.</li> 
 
 <li> <code>MIDI</code>: Full MIDI macro configuration (same chunk
@@ -1595,9 +1595,8 @@ Support for these chunks was added in MO3 2.4.1, released in January 2016.</p>
           OpenMPT Instrument Extensions</a>. Same format as in OpenMPT-made files.
      <li> <code>STPM</code>: <a href="https://wiki.openmpt.org/Development:_OpenMPT_Format_Extensions#OpenMPT_Song_Extensions">
           OpenMPT Song Extensions</a>. Same format as in OpenMPT-made files.
-     <li> <code>STPM</code>: <a href="https://wiki.openmpt.org/Development:_OpenMPT_Format_Extensions#OpenMPT_Song_Extensions">
-          OpenMPT Song Extensions</a>. Same format as in OpenMPT-made files.
-     <li> <code>228</code>: OpenMPT MPTM extensions. Same format as in
+     <li> <code>228</code>: <a href="https://wiki.openmpt.org/Development:_OpenMPT_Format_Extensions#228_extensions">
+          OpenMPT MPTM extensions</a>. Same format as in
           OpenMPT-made files. These only follow if the original file was an MPTM
           file.
      </ul>
@@ -1647,9 +1646,9 @@ apply the encoder delay yourself.</li>
 
 <p>Depending on the Ogg decoder, special care has to be taken of Ogg samples with
 shared headers: Every Ogg stream has a unique ID, and this ID has to be
-identical for all packets of the stream. Some decoders like
+identical for all frames of the stream. Some decoders like
 <a href="https://github.com/nothings/stb/blob/master/stb_vorbis.c">stb_vorbis</a>
-do not care at all about this, so you can just stitch to together the Ogg stream
+do not care about this at all, so you can just stitch the Ogg stream together
 from the shared samples. libvorbis, on the other hand, requires the shared
 header to be modified so that it uses the same unique ID as the rest of the
 sample stream.
@@ -1673,7 +1672,7 @@ MO3 import loader, or more generally to handle MO3 modules in any way.
 
 
 <p>The MO3 format has been created by Ian Luck
-(<a href="http://www.un4seen.com/">http://www.un4seen.com/</a>).
+(<a href="https://www.un4seen.com/">https://www.un4seen.com/</a>).
 If you are looking for a good encoder and decoder (but without the
 source code) and a good module player,
 Ian's web site is the right place to go. </p>
@@ -1710,7 +1709,7 @@ The Win32 binary is here <a href="unmo3.exe">unmo3.exe</a>.
 <h3>5. Other information</h3>
 
 
-The unmo3 Win32 executable is compressed with <a href="http://www.un4seen.com/petite/">PEtite</a>, and the
+The unmo3 Win32 executable is compressed with <a href="https://www.un4seen.com/petite/">PEtite</a>, and the
 Linux executable with <a href="http://upx.sourceforge.net/">UPX</a>.
 <p>
 Other modules file formats are available here (from <a href="http://www.wotsit.org">Wotsit</a>):
