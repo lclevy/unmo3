@@ -437,7 +437,7 @@ int parseHeader(unsigned char *src, unsigned long size, int parseLevel, struct m
   p = parseSamples(p, parseLevel, mo3Hdr);
 
   if (parseLevel>1) 
-    printf("end offset=0x%x\n", p-src);
+    printf("end offset=0x%lx\n", p-src);
 
   return 0;
 } 

@@ -127,7 +127,7 @@ unsigned char * unpack(unsigned char *src, unsigned char *dst, long size)
 
   }
   if ( (dst-initDst)!=initSize ) {
-    fprintf(stderr,"Error: uncompressed data length is different (%d) than expected (%ld)\n",
+    fprintf(stderr,"Error: uncompressed data length is different (%ld) than expected (%ld)\n",
       (dst-initDst), initSize);
   }
 
@@ -215,7 +215,7 @@ unsigned char * unpackSamp16Delta(unsigned char *src, unsigned char *dst, long s
   }
 
   if ( (pdst-initDst)!=initSize ) {
-    fprintf(stderr,"Error: uncompressed data length is different (%d) than expected (%ld)\n",
+    fprintf(stderr,"Error: uncompressed data length is different (%ld) than expected (%ld)\n",
       (pdst-initDst), initSize);
   }
 
@@ -289,7 +289,7 @@ unsigned char * unpackSamp16DeltaPrediction(unsigned char *src, unsigned char *d
   }
 
   if ( (pdst-initDst)!=initSize ) {
-    fprintf(stderr,"Error: uncompressed data length is different (%d) than expected (%ld)\n",
+    fprintf(stderr,"Error: uncompressed data length is different (%ld) than expected (%ld)\n",
       (pdst-initDst), initSize);
   }
 
@@ -351,7 +351,7 @@ unsigned char * unpackSamp8Delta(unsigned char *src, unsigned char *dst, long si
   }
 
   if ( (dst-initDst)!=initSize ) {
-    fprintf(stderr,"Error: uncompressed data length is different (%d) than expected (%ld)\n",
+    fprintf(stderr,"Error: uncompressed data length is different (%ld) than expected (%ld)\n",
       (dst-initDst), initSize);
   }
 
