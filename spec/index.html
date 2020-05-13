@@ -31,6 +31,7 @@ text-align: left;
 
 <hr/>News:
 <ul>
+  <li>2020-05-13 : some more new features from MO3 2.4.1.2 are now documented.</li>
   <li>2016-01-26 : new v5 misc chunks and commands are now documented. This document is now considered to be complete.</li>
   <li>2015-11-16 : small clarifications and updates</li>
   <li>2015-11-10 : updated specification by Johannes Schultz, version 0.93.</li>
@@ -424,7 +425,7 @@ then, 0x1a6 bytes :
 		<li>Bit 10 (0x400): IT Compatible Gxx (IT) - enabled if bit is <em>not</em> set</li>
 		<li>Bit 11 (0x800): IT Old Effects (IT) - enabled if bit is <em>not</em> set</li>
 		<li>Bit 16 (0x10000): MPT-compatible playback (for BASS/XMPlay)</li>
-		<li>Bit 17 (0x20000): Always set</li>
+		<li>Bit 17 (0x20000): Always set (internal BASS flag to designate modules)</li>
 		<li>Bit 19 (0x80000): MOD file uses VBlank timing (Fxx only sets speed, never tempo)</li>
 		<li>Bit 20 (0x100000): Plugin chunk is present (after sample headers)</li>
 		<li>Bit 21 (0x200000): Extended Filter Range (IT, XM)</li> 
@@ -1281,7 +1282,7 @@ second short = sample number). In XM, the first 96 values of the sample map are 
       <td> 0x032b </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> MIDI Bend </td>
+      <td> MIDI Bend (for IT files, this contains the "PWD" IT header value starting from MO3 2.4.1.2) </td>
     </tr>
     <tr>
       <td> 0x032c </td>
@@ -1577,6 +1578,8 @@ Support for these chunks was added in MO3 2.4.1, released in January 2016.</p>
      If 0x0889 &le; Cwt/v &le; 0x8FF, the original file was an MPTM file rather
      than an IT file.</li> 
 
+<li> <code>PRHI</code>: Pattern row highlight information from the IT header.</li> 
+
 <li> <code>MIDI</code>: Full MIDI macro configuration (same chunk
      layout as in IT), in case it cannot be expressed completely through MO3's
      condensed version in the header above.</li> 
@@ -1710,7 +1713,7 @@ The Win32 binary is here <a href="unmo3.exe">unmo3.exe</a>.
 
 
 The unmo3 Win32 executable is compressed with <a href="https://www.un4seen.com/petite/">PEtite</a>, and the
-Linux executable with <a href="http://upx.sourceforge.net/">UPX</a>.
+Linux executable with <a href="https://upx.github.io/">UPX</a>.
 <p>
 Other modules file formats are available here (from <a href="http://www.wotsit.org">Wotsit</a>):
 </p>
@@ -1735,7 +1738,7 @@ a huge collection of Amiga music formats descriptions.
 <p>State of the art waveform compression is explained here : <a href="http://www.true-audio.com/codec.theory">TTA</a>,
 <a href="http://citeseer.ist.psu.edu/robinson94shorten.html">Shorten</a>,
 <a href="http://www.hpl.hp.com/techreports/1999/HPL-1999-144.pdf%20">AudioPak</a>,
-and <a href="http://flac.sourceforge.net/">FLAC</a>.
+and <a href="https://xiph.org/flac/">FLAC</a>.
 </p>
 
 
