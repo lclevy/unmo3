@@ -31,6 +31,7 @@ text-align: left;
 
 <hr/>News:
 <ul>
+  <li>2021-12-01 : OpenMPT MPTM Set Finetune and Set Finetune (Smooth) commands are now documented.</li>
   <li>2020-06-04 : AdLib / OPL instrument support, as added in MO3 2.4.1.5, is now documented.</li>
   <li>2020-05-13 : some more new features from MO3 2.4.1.2 are now documented.</li>
   <li>2016-01-26 : new v5 misc chunks and commands are now documented. This document is now considered to be complete.</li>
@@ -1085,7 +1086,23 @@ value and write out the value byte as-is.</li>
       <td> - </td>
       <td>OpenMPT's "Delay Cut" (:xy). This command only exists in the MPTM format. It delays the note next to it for x ticks and then cuts it at x+y ticks.</td>
     </tr>
-    
+    <tr>
+      <td> 38 </td>
+      <td> + </td>
+      <td> - </td>
+      <td> - </td>
+      <td> - </td>
+      <td>OpenMPT's "Set Finetune" (+xy) command. Only supported in MPTM files.</td>
+    </tr>
+    <tr>
+      <td> 39 </td>
+      <td> * </td>
+      <td> - </td>
+      <td> - </td>
+      <td> - </td>
+      <td>OpenMPT's "Set Finetune (Smooth)" (*xy). Only supported in MPTM files.</td>
+    </tr>
+
   </tbody>
 </table>
 
