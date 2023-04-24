@@ -1162,13 +1162,13 @@ Every instrument contains three envelopes, which follow this structure:
       <td> 0x0002 </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> Sustain loop beginning </td>
+      <td> Sustain loop beginning (IT) / Sustain point (XM) </td>
     </tr>
     <tr>
       <td> 0x0003 </td>
       <td> 1 </td>
       <td> byte </td>
-      <td> Sustain loop end </td>
+      <td> Sustain loop end (IT) / Ignore (XM) </td>
     </tr>
     <tr>
       <td> 0x0004 </td>
@@ -1378,8 +1378,8 @@ second short = sample number). In XM, the first 96 values of the sample map are 
 
 <h4>2.3.4 Samples data</h4>
 
-Samples data takes 0x29 bytes after the sample name (0x2B if some flags are set, see below), which is 0
-terminated.
+Samples data takes 0x29 bytes after the sample name / filename
+(0x2B if some flags are set, see below), which is 0 terminated.
 <table border="1" cellpadding="2">
   <tbody>
     <tr>
